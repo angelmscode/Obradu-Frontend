@@ -230,7 +230,7 @@ void _mostrarDialogoMaterialesObra(BuildContext context) {
                 style: TextStyle(color: AppColors.primaryDark),
               ),
               content: Column(
-                mainAxisSize: MainAxisSize.min, // Ajusta el tamaño al contenido
+                mainAxisSize: MainAxisSize.min, 
                 children: [
                   TextField(
                     controller: _nuevaTareaController,

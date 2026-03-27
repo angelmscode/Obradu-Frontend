@@ -58,7 +58,7 @@ class ApiService {
 
       if (token == null) {
         debugPrint('No hay token, el usuario no está logueado');
-        return []; 
+        return [];
       }
 
       final response = await http.get(
@@ -106,14 +106,20 @@ class ApiService {
       debugPrint('Error de red: $e');
       return [];
     }
-  }Future<bool> crearTarea(int obraId, String descripcion, {int? empleadoId}) async {
+  }
+
+  Future<bool> crearTarea(
+    int obraId,
+    String descripcion, {
+    int? empleadoId,
+  }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
       if (token == null) return false;
 
       final perfil = await obtenerPerfil(token);
-      
+
       final int usuarioId = empleadoId ?? (perfil?['id'] ?? 1);
 
       final response = await http.post(
@@ -137,6 +143,7 @@ class ApiService {
       return false;
     }
   }
+
   Future<bool> completarTarea(int tareaId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -202,9 +209,8 @@ class ApiService {
       return [];
     }
   }
-  
 
-  //Vehiculos 
+  //Vehiculos
 
   // Obtener toda la flota
   Future<List<dynamic>> getVehiculos() async {
@@ -305,7 +311,7 @@ class ApiService {
     }
   }
 
-  // Marcar como reparado 
+  // Marcar como reparado
   Future<bool> recuperarVehiculoTaller(int vehiculoId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -352,7 +358,7 @@ class ApiService {
     }
   }
 
-  // Dar de alta a un empleado 
+  // Dar de alta a un empleado
   Future<bool> crearEmpleado(Map<String, dynamic> datos) async {
     try {
       final response = await http.post(
@@ -384,7 +390,8 @@ class ApiService {
       return false;
     }
   }
-  // Asignar un empleado a una obra 
+
+  // Asignar un empleado a una obra
   Future<bool> asignarEmpleadoAObra(int obraId, int empleadoId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -392,7 +399,7 @@ class ApiService {
       if (token == null) return false;
 
       final response = await http.post(
-        Uri.parse('$baseUrl/obras/$obraId/empleados'), 
+        Uri.parse('$baseUrl/obras/$obraId/empleados'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -410,7 +417,7 @@ class ApiService {
     }
   }
 
-// MÉTODOS DE INVENTARIO
+  // MÉTODOS DE INVENTARIO
 
   // Obtener todos los materiales
   Future<List<MaterialInventario>> getMateriales() async {
@@ -482,8 +489,12 @@ class ApiService {
     }
   }
 
-// ASIGNAR MATERIAL A OBRA
-  Future<bool> asignarMaterialAObra(int obraId, int materialId, int cantidad) async {
+  // ASIGNAR MATERIAL A OBRA
+  Future<bool> asignarMaterialAObra(
+    int obraId,
+    int materialId,
+    int cantidad,
+  ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -513,8 +524,8 @@ class ApiService {
       return false;
     }
   }
- 
- Future<List<dynamic>> getMaterialesObra(int obraId) async {
+
+  Future<List<dynamic>> getMaterialesObra(int obraId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -531,7 +542,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return jsonDecode(utf8.decode(response.bodyBytes));
       } else {
-        debugPrint('Error al obtener materiales de la obra. Código: ${response.statusCode}');
+        debugPrint(
+          'Error al obtener materiales de la obra. Código: ${response.statusCode}',
+        );
         return [];
       }
     } catch (e) {
@@ -539,14 +552,16 @@ class ApiService {
       return [];
     }
   }
-Future<Map<String, dynamic>?> getEstadisticasPanel() async {
+
+  // Materiales asignados a una obra
+  Future<Map<String, dynamic>?> getEstadisticasPanel() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token'); 
+    final token = prefs.getString('token');
 
     if (token == null) throw Exception('No hay token de sesión');
 
     final response = await http.get(
-      Uri.parse('$baseUrl/obras/estadisticas/panel-jefe'), 
+      Uri.parse('$baseUrl/obras/estadisticas/panel-jefe'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -554,10 +569,9 @@ Future<Map<String, dynamic>?> getEstadisticasPanel() async {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body); 
+      return json.decode(response.body);
     } else {
       throw Exception('Error al cargar estadísticas: ${response.body}');
     }
   }
-  
 }
