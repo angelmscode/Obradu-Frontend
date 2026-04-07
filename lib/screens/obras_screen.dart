@@ -6,19 +6,25 @@ import 'detalle_obra_screen.dart';
 import '../services/api_service.dart';
 import '../models/obra.dart';
 
+// #region Widget Principal
 class ObrasScreen extends StatefulWidget {
   const ObrasScreen({super.key});
 
   @override
   State<ObrasScreen> createState() => _ObrasScreenState();
 }
+// #endregion
 
 class _ObrasScreenState extends State<ObrasScreen> {
+  
+  // #region Variables de Estado
   String _nombre = "";
   String _rol = "";
   
   late Future<List<Obra>> _obrasFuture;
+  // #endregion
 
+  // #region Ciclo de Vida y Carga de Datos
   @override
   void initState() {
     super.initState();
@@ -33,7 +39,9 @@ class _ObrasScreenState extends State<ObrasScreen> {
       _rol = prefs.getString('rol') ?? "EMPLEADO";
     });
   }
+  // #endregion
 
+  // #region Constructor de Interfaz (Build)
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,7 +81,9 @@ class _ObrasScreenState extends State<ObrasScreen> {
       ),
     );
   }
+  // #endregion
 
+  // #region Widgets Auxiliares
   Widget _crearTarjetaObra(Obra obra) {
     double progreso = obra.progreso; 
     
@@ -173,4 +183,5 @@ class _ObrasScreenState extends State<ObrasScreen> {
       ),
     );
   }
+  // #endregion
 }

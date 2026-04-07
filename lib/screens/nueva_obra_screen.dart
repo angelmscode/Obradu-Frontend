@@ -1,26 +1,34 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
+// #region Widget Principal
 class NuevaObraScreen extends StatefulWidget {
   const NuevaObraScreen({super.key});
 
   @override
   State<NuevaObraScreen> createState() => _NuevaObraScreenState();
 }
+// #endregion
 
 class _NuevaObraScreenState extends State<NuevaObraScreen> {
+  
+  // #region Variables de Estado y Controladores
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _ubicacionController = TextEditingController();
+  // #endregion
 
+  // #region Ciclo de Vida
   @override
   void dispose() {
     _nombreController.dispose();
     _ubicacionController.dispose();
     super.dispose();
   }
+  // #endregion
 
+  // #region Lógica y Acciones
   void _guardarObra() {
     if (_formKey.currentState!.validate()) {
       final String nombreObra = _nombreController.text;
@@ -35,7 +43,9 @@ class _NuevaObraScreenState extends State<NuevaObraScreen> {
       Navigator.pop(context);
     }
   }
+  // #endregion
 
+  // #region Constructor de Interfaz
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -113,4 +123,5 @@ class _NuevaObraScreenState extends State<NuevaObraScreen> {
       ),
     );
   }
+  // #endregion
 }

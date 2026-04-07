@@ -4,25 +4,33 @@ import '../theme/app_colors.dart';
 import '../widgets/obradu_drawer.dart';
 import '../services/api_service.dart';
 
+// #region Widget Principal
 class VehiculosScreen extends StatefulWidget {
   const VehiculosScreen({super.key});
 
   @override
   State<VehiculosScreen> createState() => _VehiculosScreenState();
 }
+// #endregion
 
 class _VehiculosScreenState extends State<VehiculosScreen> {
+  
+  // #region Variables de Estado
   String _nombre = "";
   String _rol = "";
   List<dynamic> _vehiculos = [];
   bool _cargando = true;
+  // #endregion
 
+  // #region Ciclo de Vida
   @override
   void initState() {
     super.initState();
     _cargarDatosYVehiculos();
   }
+  // #endregion
 
+  // #region Lógica y Peticiones API
   Future<void> _cargarDatosYVehiculos() async {
     setState(() => _cargando = true);
     final prefs = await SharedPreferences.getInstance();
@@ -58,7 +66,9 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
       }
     }
   }
+  // #endregion
 
+  // #region Constructor de Interfaz (Build)
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,7 +105,9 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
             ),
     );
   }
+  // #endregion
 
+  // #region Widgets Auxiliares
   Widget _crearTarjetaVehiculo(Map<String, dynamic> vehiculo) {
     final int id = vehiculo['id'];
     final String matricula = vehiculo['matricula'];
@@ -214,4 +226,5 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
       ),
     );
   }
+  // #endregion
 }

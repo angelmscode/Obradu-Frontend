@@ -4,14 +4,18 @@ import '../theme/app_colors.dart';
 import '../widgets/obradu_drawer.dart';
 import '../services/api_service.dart';
 
+// #region Widget Principal
 class EmpleadosScreen extends StatefulWidget {
   const EmpleadosScreen({super.key});
 
   @override
   State<EmpleadosScreen> createState() => _EmpleadosScreenState();
 }
+// #endregion
 
 class _EmpleadosScreenState extends State<EmpleadosScreen> {
+  
+  // #region Variables de Estado
   String _nombre = "";
   String _rol = "";
   List<dynamic> _empleados = [];
@@ -23,7 +27,9 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   String _rolSeleccionado = 'EMPLEADO';
+  // #endregion
 
+  // #region Ciclo de Vida y Carga de Datos
   @override
   void initState() {
     super.initState();
@@ -47,7 +53,9 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
       });
     }
   }
+  // #endregion
 
+  // #region Acciones (Eliminar / Nuevo / Asignar)
   Future<void> _eliminar(int id, String nombreEmpleado) async {
     final confirmar = await showDialog<bool>(
       context: context,
@@ -178,7 +186,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                 ),
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    Navigator.pop(dialogContext); 
+                    Navigator.pop(dialogContext);
                     setState(() => _cargando = true);
 
                     final exito = await ApiService().crearEmpleado({
@@ -264,11 +272,11 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                     isExpanded: true,
                     items: obras.map((obra) {
                       return DropdownMenuItem<int>(
-                        value: obra.id, 
+                        value: obra.id,
                         child: Text(
                           obra.nombre,
                           overflow: TextOverflow.ellipsis,
-                        ), 
+                        ),
                       );
                     }).toList(),
                     onChanged: (int? nuevoValor) {
@@ -287,7 +295,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                 ElevatedButton(
                   onPressed: () async {
                     if (obraSeleccionadaId != null) {
-                      Navigator.pop(dialogContext); 
+                      Navigator.pop(dialogContext);
 
                       final exito = await ApiService().asignarEmpleadoAObra(
                         obraSeleccionadaId!,
@@ -317,7 +325,9 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
       },
     );
   }
+  // #endregion
 
+  // #region Constructor de Interfaz
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -463,4 +473,5 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
             ),
     );
   }
+  // #endregion
 }

@@ -5,20 +5,26 @@ import '../theme/app_colors.dart';
 import '../widgets/obradu_drawer.dart';
 import '../services/api_service.dart';
 
+// #region Widget Principal
 class InventarioGlobalScreen extends StatefulWidget {
   const InventarioGlobalScreen({super.key});
 
   @override
   State<InventarioGlobalScreen> createState() => _InventarioGlobalScreenState();
 }
+// #endregion
 
 class _InventarioGlobalScreenState extends State<InventarioGlobalScreen> {
+  
+  // #region Variables de Estado
   List<MaterialInventario> _materiales = [];
   bool _cargando = true;
   
   String _nombre = "Cargando...";
   String _rol = "JEFE";
+  // #endregion
 
+  // #region Ciclo de Vida y Carga de Datos
   @override
   void initState() {
     super.initState();
@@ -48,7 +54,9 @@ class _InventarioGlobalScreenState extends State<InventarioGlobalScreen> {
       if (mounted) setState(() => _cargando = false);
     }
   }
+  // #endregion
 
+  // #region Acciones (Añadir / Borrar)
   // FUNCIÓN PARA AÑADIR MATERIAL NUEVO
   void _mostrarDialogoNuevoMaterial() {
     final nombreCtrl = TextEditingController();
@@ -150,7 +158,9 @@ class _InventarioGlobalScreenState extends State<InventarioGlobalScreen> {
       }
     }
   }
+  // #endregion
 
+  // #region Constructor de Interfaz
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -201,4 +211,5 @@ class _InventarioGlobalScreenState extends State<InventarioGlobalScreen> {
       ),
     );
   }
+  // #endregion
 }

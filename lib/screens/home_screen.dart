@@ -7,19 +7,25 @@ import 'nueva_obra_screen.dart';
 import '../services/api_service.dart';
 import '../models/obra.dart';
 
+// #region Widget Principal
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
+// #endregion
 
 class _HomeScreenState extends State<HomeScreen> {
+  
+  // #region Variables de Estado
   String _nombre = "Cargando...";
   String _rol = "";
   
   late Future<List<Obra>> _obrasFuture;
+  // #endregion
 
+  // #region Ciclo de Vida y Carga de Datos
   @override
   void initState() {
     super.initState();
@@ -34,7 +40,9 @@ class _HomeScreenState extends State<HomeScreen> {
       _rol = prefs.getString('rol') ?? "EMPLEADO";
     });
   }
+  // #endregion
 
+  // #region Constructor de Interfaz (Build)
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -154,14 +162,14 @@ class _HomeScreenState extends State<HomeScreen> {
         : null, 
     );
   }
+  // #endregion
 
+  // #region Widgets Auxiliares
   Widget _crearTarjetaObra(Obra obra) {
-double progreso = obra.progreso; 
-  
-  String estado = progreso >= 1.0 ? 'Finalizada' : 'En progreso';
-  
-
-
+    double progreso = obra.progreso; 
+      
+    String estado = progreso >= 1.0 ? 'Finalizada' : 'En progreso';
+    
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 4,
@@ -257,4 +265,5 @@ double progreso = obra.progreso;
       ),
     );
   }
+  // #endregion
 }

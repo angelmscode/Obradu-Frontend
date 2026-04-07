@@ -1,21 +1,29 @@
+// #region Imports
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_colors.dart';
 import '../services/api_service.dart';
 import '../widgets/obradu_drawer.dart';
+// #endregion
 
+// #region Widget Principal
 class PanelJefeScreen extends StatefulWidget {
   const PanelJefeScreen({super.key});
 
   @override
   State<PanelJefeScreen> createState() => _PanelJefeScreenState();
 }
+// #endregion
 
 class _PanelJefeScreenState extends State<PanelJefeScreen> {
+  
+  // #region Variables de Estado
   String _nombre = "Cargando...";
   String _rol = "";
   Future<Map<String, dynamic>?> _estadisticasFuture = Future.value(null);
+  // #endregion
 
+  // #region Ciclo de Vida y Carga de Datos
   @override
   void initState() {
     super.initState();
@@ -36,7 +44,9 @@ class _PanelJefeScreenState extends State<PanelJefeScreen> {
       _estadisticasFuture = ApiService().getEstadisticasPanel();
     });
   }
+  // #endregion
 
+  // #region Constructor de Interfaz
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -282,7 +292,9 @@ class _PanelJefeScreenState extends State<PanelJefeScreen> {
       ),
     );
   }
+  // #endregion
 
+  // #region Widgets Auxiliares
   // WIDGET REUTILIZABLE PARA LAS TARJETAS 
   Widget _crearTarjetaEstadistica({
     required String titulo,
@@ -378,4 +390,5 @@ class _PanelJefeScreenState extends State<PanelJefeScreen> {
       ],
     );
   }
+  // #endregion
 }

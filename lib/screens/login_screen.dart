@@ -4,15 +4,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../theme/app_colors.dart';
 
+// #region Widget Principal
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
+// #endregion
 
 class _LoginScreenState extends State<LoginScreen> {
   
+  // #region Variables de Estado y Controladores
   // Controladores para leer lo que el usuario escribe
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -20,7 +23,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final ApiService _apiService = ApiService();
 
   bool _isLoading = false;
+  // #endregion
 
+  // #region Lógica de Autenticación
   void _hacerLogin() async {
     setState(() {
       _isLoading = true; // Carga empezada
@@ -78,7 +83,9 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     }
   }
+  // #endregion
 
+  // #region Constructor de Interfaz (Build)
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -148,4 +155,5 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+  // #endregion
 }

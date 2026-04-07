@@ -8,6 +8,7 @@ import '../models/obra.dart';
 class ApiService {
   static const String baseUrl = 'http://localhost:8000';
 
+  // #region Autenticación y Perfil
   Future<bool> login(String email, String password) async {
     try {
       final response = await http.post(
@@ -50,7 +51,9 @@ class ApiService {
       return null;
     }
   }
+  // #endregion
 
+  // #region Obras y Panel
   Future<List<Obra>> getObras() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -82,6 +85,29 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>?> getEstadisticasPanel() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) throw Exception('No hay token de sesión');
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/obras/estadisticas/panel-jefe'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Error al cargar estadísticas: ${response.body}');
+    }
+  }
+  // #endregion
+
+  // #region Tareas (Asistencias)
   Future<List<dynamic>> getTareasObra(int obraId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -119,7 +145,6 @@ class ApiService {
       if (token == null) return false;
 
       final perfil = await obtenerPerfil(token);
-
       final int usuarioId = empleadoId ?? (perfil?['id'] ?? 1);
 
       final response = await http.post(
@@ -185,6 +210,32 @@ class ApiService {
       return false;
     }
   }
+  // #endregion
+
+  // #region Empleados y Rrhh
+  Future<List<dynamic>> getEmpleados() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return [];
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/usuarios/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(utf8.decode(response.bodyBytes));
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error al cargar empleados: $e');
+      return [];
+    }
+  }
 
   Future<List<dynamic>> getEmpleadosObra(int obraId) async {
     try {
@@ -210,9 +261,64 @@ class ApiService {
     }
   }
 
-  //Vehiculos
+  Future<bool> crearEmpleado(Map<String, dynamic> datos) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/usuarios/registro'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(datos),
+      );
+      return (response.statusCode == 200 || response.statusCode == 201);
+    } catch (e) {
+      debugPrint('Error al crear empleado: $e');
+      return false;
+    }
+  }
 
-  // Obtener toda la flota
+  Future<bool> eliminarEmpleado(int empleadoId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return false;
+
+      final response = await http.delete(
+        Uri.parse('$baseUrl/usuarios/$empleadoId'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error al eliminar empleado: $e');
+      return false;
+    }
+  }
+
+  Future<bool> asignarEmpleadoAObra(int obraId, int empleadoId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return false;
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/obras/$obraId/empleados'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'empleado_id': empleadoId,
+          'fecha_asignacion': DateTime.now().toIso8601String().split('T')[0],
+        }),
+      );
+
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      debugPrint('Error al asignar empleado: $e');
+      return false;
+    }
+  }
+  // #endregion
+
+  // #region Vehículos y Flota
   Future<List<dynamic>> getVehiculos() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -237,7 +343,6 @@ class ApiService {
     }
   }
 
-  // Reservar un vehículo
   Future<bool> reservarVehiculo(int vehiculoId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -267,7 +372,6 @@ class ApiService {
     }
   }
 
-  // Devolver un vehículo
   Future<bool> devolverVehiculo(int vehiculoId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -289,7 +393,6 @@ class ApiService {
     }
   }
 
-  // Enviar al taller
   Future<bool> enviarVehiculoTaller(int vehiculoId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -311,7 +414,6 @@ class ApiService {
     }
   }
 
-  // Marcar como reparado
   Future<bool> recuperarVehiculoTaller(int vehiculoId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -332,94 +434,9 @@ class ApiService {
       return false;
     }
   }
+  // #endregion
 
-  // Obtener toda la plantilla
-  Future<List<dynamic>> getEmpleados() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-      if (token == null) return [];
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/usuarios/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        return jsonDecode(utf8.decode(response.bodyBytes));
-      }
-      return [];
-    } catch (e) {
-      debugPrint('Error al cargar empleados: $e');
-      return [];
-    }
-  }
-
-  // Dar de alta a un empleado
-  Future<bool> crearEmpleado(Map<String, dynamic> datos) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/usuarios/registro'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(datos),
-      );
-      return (response.statusCode == 200 || response.statusCode == 201);
-    } catch (e) {
-      debugPrint('Error al crear empleado: $e');
-      return false;
-    }
-  }
-
-  // Despedir/Borrar empleado
-  Future<bool> eliminarEmpleado(int empleadoId) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-      if (token == null) return false;
-
-      final response = await http.delete(
-        Uri.parse('$baseUrl/usuarios/$empleadoId'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-      return response.statusCode == 200;
-    } catch (e) {
-      debugPrint('Error al eliminar empleado: $e');
-      return false;
-    }
-  }
-
-  // Asignar un empleado a una obra
-  Future<bool> asignarEmpleadoAObra(int obraId, int empleadoId) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-      if (token == null) return false;
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/obras/$obraId/empleados'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'empleado_id': empleadoId,
-          'fecha_asignacion': DateTime.now().toIso8601String().split('T')[0],
-        }),
-      );
-
-      return response.statusCode == 200 || response.statusCode == 201;
-    } catch (e) {
-      debugPrint('Error al asignar empleado: $e');
-      return false;
-    }
-  }
-
-  // MÉTODOS DE INVENTARIO
-
-  // Obtener todos los materiales
+  // #region Inventario y Materiales
   Future<List<MaterialInventario>> getMateriales() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -446,7 +463,6 @@ class ApiService {
     }
   }
 
-  // Crear un material nuevo
   Future<bool> crearMaterial(Map<String, dynamic> datos) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -468,7 +484,6 @@ class ApiService {
     }
   }
 
-  // Eliminar un material
   Future<bool> eliminarMaterial(int id) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -489,7 +504,6 @@ class ApiService {
     }
   }
 
-  // ASIGNAR MATERIAL A OBRA
   Future<bool> asignarMaterialAObra(
     int obraId,
     int materialId,
@@ -553,25 +567,5 @@ class ApiService {
     }
   }
 
-  // Materiales asignados a una obra
-  Future<Map<String, dynamic>?> getEstadisticasPanel() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-
-    if (token == null) throw Exception('No hay token de sesión');
-
-    final response = await http.get(
-      Uri.parse('$baseUrl/obras/estadisticas/panel-jefe'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Error al cargar estadísticas: ${response.body}');
-    }
-  }
+  // #endregion
 }

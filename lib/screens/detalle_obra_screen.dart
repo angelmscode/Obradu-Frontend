@@ -1,8 +1,11 @@
+// #region Imports
 import 'package:flutter/material.dart';
 import 'package:obradu/widgets/dialogo_asignar_material.dart';
 import '../theme/app_colors.dart';
 import '../services/api_service.dart';
+// #endregion
 
+// #region Definición del Widget
 class DetalleObraScreen extends StatefulWidget {
   final Map<String, dynamic> obra;
   final String rol;
@@ -12,8 +15,10 @@ class DetalleObraScreen extends StatefulWidget {
   @override
   State<DetalleObraScreen> createState() => _DetalleObraScreenState();
 }
+// #endregion
 
 class _DetalleObraScreenState extends State<DetalleObraScreen> {
+  // #region Variables de Estado
   List<dynamic> _tareas = [];
   bool _cargando = true;
 
@@ -21,7 +26,9 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
   int? _empleadoSeleccionado;
 
   final TextEditingController _nuevaTareaController = TextEditingController();
+  // #endregion
 
+  // #region Ciclo de Vida (Lifecycle)
   @override
   void initState() {
     super.initState();
@@ -34,7 +41,9 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
     _nuevaTareaController.dispose();
     super.dispose();
   }
+  // #endregion
 
+  // #region Lógica de Datos y API
   Future<void> _cargarTareas() async {
     setState(() => _cargando = true);
     final tareasServidor = await ApiService().getTareasObra(widget.obra['id']);
@@ -134,7 +143,10 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
       }
     }
   }
-void _mostrarDialogoMaterialesObra(BuildContext context) {
+  // #endregion
+
+  // #region Diálogos
+  void _mostrarDialogoMaterialesObra(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) {
@@ -251,7 +263,7 @@ void _mostrarDialogoMaterialesObra(BuildContext context) {
                           vertical: 8,
                         ),
                       ),
-                      value: _empleadoSeleccionado,
+                      initialValue: _empleadoSeleccionado,
                       isExpanded: true,
                       items: _empleados.map((emp) {
                         return DropdownMenuItem<int>(
@@ -311,8 +323,10 @@ void _mostrarDialogoMaterialesObra(BuildContext context) {
       },
     );
   }
+  // #endregion
 
- @override
+  // #region Pantalla Principal
+  @override
   Widget build(BuildContext context) {
     double progreso = widget.obra['progreso'] != null 
         ? (widget.obra['progreso'] as num).toDouble() 
@@ -408,110 +422,110 @@ void _mostrarDialogoMaterialesObra(BuildContext context) {
                           minHeight: 10,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                       if (esJefe) ...[
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.local_shipping),
-                        label: const Text('Enviar Material a Obra'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryDark,
-                          foregroundColor: AppColors.background,
-                          minimumSize: const Size(double.infinity, 48), 
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: () async {
-                          final resultado = await showDialog(
-                            context: context,
-                            builder: (context) => DialogoAsignarMaterial(
-                              obraId: widget.obra['id'],
-                              apiService: ApiService(),
+                        if (esJefe) ...[
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.local_shipping),
+                              label: const Text('Enviar Material a Obra'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryDark,
+                                foregroundColor: AppColors.background,
+                                minimumSize: const Size(double.infinity, 48), 
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: () async {
+                                final resultado = await showDialog(
+                                  context: context,
+                                  builder: (context) => DialogoAsignarMaterial(
+                                    obraId: widget.obra['id'],
+                                    apiService: ApiService(),
+                                  ),
+                                );
+
+                                if (resultado == true) {
+                                  debugPrint('Material enviado correctamente');
+                                }
+                              },
                             ),
-                          );
-
-                          if (resultado == true) {
-                            debugPrint('Material enviado correctamente');
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 12,
-                    ),
-
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () => _mostrarDialogoMaterialesObra(context),
-                        icon: const Icon(Icons.inventory_2),
-                        label: const Text('Ver Materiales de la Obra'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryDark, 
-                          foregroundColor: AppColors.background, 
-                          minimumSize: const Size(double.infinity, 48), 
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
                           ),
-                          elevation: 2, 
+                          const SizedBox(
+                            height: 12,
+                          ),
+
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _mostrarDialogoMaterialesObra(context),
+                              icon: const Icon(Icons.inventory_2),
+                              label: const Text('Ver Materiales de la Obra'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryDark, 
+                                foregroundColor: AppColors.background, 
+                                minimumSize: const Size(double.infinity, 48), 
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                elevation: 2, 
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Tareas de hoy',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Chip(
+                        label: Text(esJefe ? 'Modo: JEFE' : 'Modo: EMPLEADO'),
+                        backgroundColor: esJefe
+                            ? AppColors.warning.withValues(alpha: 0.2)
+                            : AppColors.pending.withValues(alpha: 0.2),
+                        labelStyle: TextStyle(
+                          color: esJefe ? AppColors.warning : AppColors.pending,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  if (_tareas.isEmpty)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Text(
+                          'No hay tareas registradas.',
+                          style: TextStyle(color: AppColors.textSecondary),
                         ),
                       ),
                     ),
-                  ],
+
+                  ...List.generate(
+                    _tareas.length,
+                    (index) => _crearTarjetaTarea(index, esJefe),
+                  ),
+
+                  const SizedBox(height: 80),
                 ],
               ),
             ),
-
-            const SizedBox(height: 32),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Tareas de hoy',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                Chip(
-                  label: Text(esJefe ? 'Modo: JEFE' : 'Modo: EMPLEADO'),
-                  backgroundColor: esJefe
-                      ? AppColors.warning.withValues(alpha: 0.2)
-                      : AppColors.pending.withValues(alpha: 0.2),
-                  labelStyle: TextStyle(
-                    color: esJefe ? AppColors.warning : AppColors.pending,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            if (_tareas.isEmpty)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Text(
-                    'No hay tareas registradas.',
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                ),
-              ),
-
-            ...List.generate(
-              _tareas.length,
-              (index) => _crearTarjetaTarea(index, esJefe),
-            ),
-
-            const SizedBox(height: 80),
-          ],
-        ),
-      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _mostrarDialogoNuevaTarea,
         backgroundColor: AppColors.primary,
@@ -520,7 +534,9 @@ void _mostrarDialogoMaterialesObra(BuildContext context) {
       ),
     );
   }
+  // #endregion
 
+  // #region Métodos y Widgets Auxiliares
   Map<String, String> _obtenerDatosEmpleado(int? empleadoId) {
     if (empleadoId == null || _empleados.isEmpty) {
       return {'nombreCompleto': 'Sin asignar', 'iniciales': '??'};
@@ -634,4 +650,5 @@ void _mostrarDialogoMaterialesObra(BuildContext context) {
       ),
     );
   }
+  // #endregion
 }
