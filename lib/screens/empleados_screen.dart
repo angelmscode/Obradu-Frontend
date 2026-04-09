@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_colors.dart';
 import '../widgets/obradu_drawer.dart';
 import '../services/api_service.dart';
+import '../models/usuario.dart';
 
 // #region Widget Principal
 class EmpleadosScreen extends StatefulWidget {
@@ -18,7 +19,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
   // #region Variables de Estado
   String _nombre = "";
   String _rol = "";
-  List<dynamic> _empleados = [];
+  List<Usuario> _empleados = []; 
   bool _cargando = true;
 
   final _formKey = GlobalKey<FormState>();
@@ -367,7 +368,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                 itemCount: _empleados.length,
                 itemBuilder: (context, index) {
                   final emp = _empleados[index];
-                  final esJefe = emp['rol'] == 'JEFE';
+                  final esJefe = emp.rol == 'JEFE';
 
                   return Card(
                     elevation: 1,
@@ -393,7 +394,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                         ),
                       ),
                       title: Text(
-                        '${emp['nombre']} ${emp['apellidos']}',
+                        '${emp.nombre} ${emp.apellidos}', 
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -404,7 +405,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                         children: [
                           const SizedBox(height: 4),
                           Text(
-                            emp['email'],
+                            emp.email, 
                             style: TextStyle(
                               color: Colors.grey.shade600,
                               fontSize: 13,
@@ -423,7 +424,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              emp['rol'],
+                              emp.rol, 
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -447,9 +448,9 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                                   ),
                                   onPressed: () {
                                     final nombreCompleto =
-                                        '${emp['nombre']} ${emp['apellidos']}';
+                                        '${emp.nombre} ${emp.apellidos}'; 
                                     _mostrarDialogoAsignarObra(
-                                      emp['id'],
+                                      emp.id, 
                                       nombreCompleto,
                                     );
                                   },
@@ -461,7 +462,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                                     color: AppColors.error,
                                   ),
                                   onPressed: () =>
-                                      _eliminar(emp['id'], emp['nombre']),
+                                      _eliminar(emp.id, emp.nombre), 
                                 ),
                               ],
                             )

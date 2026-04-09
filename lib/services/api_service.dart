@@ -4,6 +4,10 @@ import 'package:obradu/models/material_inventario.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import '../models/obra.dart';
+import '../models/usuario.dart';
+import '../models/tarea.dart';
+import '../models/vehiculo.dart';
+import '../models/material_obra.dart';
 
 class ApiService {
   static const String baseUrl = 'http://localhost:8000';
@@ -85,6 +89,38 @@ class ApiService {
     }
   }
 
+  Future<bool> crearObra(String nombre, String direccion) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return false;
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/obras/'), 
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'nombre': nombre,
+          'direccion': direccion,
+          'fecha_inicio': DateTime.now().toIso8601String().split('T')[0],
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        debugPrint('Obra creada correctamente en el servidor');
+        return true;
+      } else {
+        debugPrint('Error al crear la obra: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('Error de conexión en crearObra: $e');
+      return false;
+    }
+  }
+
   Future<Map<String, dynamic>?> getEstadisticasPanel() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -108,7 +144,7 @@ class ApiService {
   // #endregion
 
   // #region Tareas (Asistencias)
-  Future<List<dynamic>> getTareasObra(int obraId) async {
+  Future<List<Tarea>> getTareasObra(int obraId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -123,7 +159,8 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(utf8.decode(response.bodyBytes));
+        List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
+        return body.map((item) => Tarea.fromJson(item)).toList();
       } else {
         debugPrint('Error al cargar tareas: ${response.statusCode}');
         return [];
@@ -213,7 +250,7 @@ class ApiService {
   // #endregion
 
   // #region Empleados y Rrhh
-  Future<List<dynamic>> getEmpleados() async {
+  Future<List<Usuario>> getEmpleados() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -228,7 +265,8 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(utf8.decode(response.bodyBytes));
+        List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
+        return body.map((dynamic item) => Usuario.fromJson(item)).toList();
       }
       return [];
     } catch (e) {
@@ -237,7 +275,8 @@ class ApiService {
     }
   }
 
-  Future<List<dynamic>> getEmpleadosObra(int obraId) async {
+
+  Future<List<Usuario>> getEmpleadosObra(int obraId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -252,7 +291,8 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(utf8.decode(response.bodyBytes));
+        List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
+        return body.map((dynamic item) => Usuario.fromJson(item)).toList();
       }
       return [];
     } catch (e) {
@@ -319,7 +359,7 @@ class ApiService {
   // #endregion
 
   // #region Vehículos y Flota
-  Future<List<dynamic>> getVehiculos() async {
+  Future<List<Vehiculo>> getVehiculos() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -334,7 +374,8 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(utf8.decode(response.bodyBytes));
+        List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
+        return body.map((dynamic item) => Vehiculo.fromJson(item)).toList();
       }
       return [];
     } catch (e) {
@@ -483,7 +524,7 @@ class ApiService {
       return false;
     }
   }
-
+  
   Future<bool> eliminarMaterial(int id) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -539,7 +580,7 @@ class ApiService {
     }
   }
 
-  Future<List<dynamic>> getMaterialesObra(int obraId) async {
+  Future<List<MaterialObra>> getMaterialesObra(int obraId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -554,7 +595,9 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(utf8.decode(response.bodyBytes));
+        // Decodificamos y convertimos cada mapa al nuevo objeto MaterialObra
+        List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
+        return body.map((item) => MaterialObra.fromJson(item)).toList();
       } else {
         debugPrint(
           'Error al obtener materiales de la obra. Código: ${response.statusCode}',

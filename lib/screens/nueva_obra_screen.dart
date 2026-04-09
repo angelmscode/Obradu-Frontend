@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obradu/services/api_service.dart';
 import '../theme/app_colors.dart';
 
 // #region Widget Principal
@@ -29,18 +30,31 @@ class _NuevaObraScreenState extends State<NuevaObraScreen> {
   // #endregion
 
   // #region Lógica y Acciones
-  void _guardarObra() {
+  void _guardarObra() async {
     if (_formKey.currentState!.validate()) {
       final String nombreObra = _nombreController.text;
+      final String ubicacionObra = _ubicacionController.text;
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Obra "$nombreObra" creada con éxito'),
-          backgroundColor: AppColors.success,
-        ),
-      );
+      bool exito = await ApiService().crearObra(nombreObra, ubicacionObra);
 
-      Navigator.pop(context);
+      if (!mounted) return; 
+
+      if (exito) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Obra "$nombreObra" creada con éxito'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al crear la obra. Verifica tu conexión o los datos.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
   // #endregion

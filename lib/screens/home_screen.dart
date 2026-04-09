@@ -181,15 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => DetalleObraScreen(
-                obra: {
-                  'id': obra.id, 
-                  'nombre': obra.nombre,
-                  'ubicacion': obra.direccion, 
-                  'progreso': progreso,
-                }, 
-                rol: _rol
-              ),
+              builder: (context) => DetalleObraScreen(obra: obra, rol: _rol),
             ),
           ).then((_) {
             setState(() {

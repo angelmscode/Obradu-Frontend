@@ -1,5 +1,9 @@
 // #region Imports
 import 'package:flutter/material.dart';
+import 'package:obradu/models/material_obra.dart';
+import 'package:obradu/models/obra.dart';
+import 'package:obradu/models/tarea.dart';
+import 'package:obradu/models/usuario.dart';
 import 'package:obradu/widgets/dialogo_asignar_material.dart';
 import '../theme/app_colors.dart';
 import '../services/api_service.dart';
@@ -7,7 +11,7 @@ import '../services/api_service.dart';
 
 // #region Definición del Widget
 class DetalleObraScreen extends StatefulWidget {
-  final Map<String, dynamic> obra;
+  final Obra obra;
   final String rol;
 
   const DetalleObraScreen({super.key, required this.obra, required this.rol});
@@ -19,16 +23,16 @@ class DetalleObraScreen extends StatefulWidget {
 
 class _DetalleObraScreenState extends State<DetalleObraScreen> {
   // #region Variables de Estado
-  List<dynamic> _tareas = [];
+  List<Tarea> _tareas = [];
   bool _cargando = true;
 
-  List<dynamic> _empleados = [];
+  List<Usuario> _empleados = [];
   int? _empleadoSeleccionado;
 
   final TextEditingController _nuevaTareaController = TextEditingController();
   // #endregion
 
-  // #region Ciclo de Vida (Lifecycle)
+  // #region Ciclo de Vida
   @override
   void initState() {
     super.initState();
@@ -44,19 +48,16 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
   // #endregion
 
   // #region Lógica de Datos y API
+
   Future<void> _cargarTareas() async {
     setState(() => _cargando = true);
-    final tareasServidor = await ApiService().getTareasObra(widget.obra['id']);
-    
-    List<dynamic> tareasOrdenadas = List.from(tareasServidor);
+    final tareasServidor = await ApiService().getTareasObra(widget.obra.id);
+
+    List<Tarea> tareasOrdenadas = List.from(tareasServidor);
 
     tareasOrdenadas.sort((a, b) {
-      bool estaCompletadaA = a['completada'] == true || a['completada'] == 1; 
-      bool estaCompletadaB = b['completada'] == true || b['completada'] == 1;
-
-      int valorA = estaCompletadaA ? 1 : 0;
-      int valorB = estaCompletadaB ? 1 : 0;
-
+      int valorA = a.completada ? 1 : 0;
+      int valorB = b.completada ? 1 : 0;
       return valorA.compareTo(valorB);
     });
 
@@ -68,12 +69,12 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
 
   // Función para cargar los empleados
   Future<void> _cargarEmpleados() async {
-    final empleados = await ApiService().getEmpleadosObra(widget.obra['id']);
+    final empleados = await ApiService().getEmpleadosObra(widget.obra.id);
     if (mounted) {
       setState(() {
         _empleados = empleados;
         if (widget.rol == 'JEFE' && _empleados.isNotEmpty) {
-          _empleadoSeleccionado = _empleados[0]['id'];
+          _empleadoSeleccionado = _empleados[0].id;
         }
       });
     }
@@ -87,7 +88,7 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
     setState(() => _cargando = true);
 
     final exito = await ApiService().crearTarea(
-      widget.obra['id'],
+      widget.obra.id,
       texto,
       empleadoId: widget.rol == 'JEFE' ? _empleadoSeleccionado : null,
     );
@@ -154,9 +155,9 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
           title: const Text('Inventario en Obra'),
           content: SizedBox(
             width: 400,
-            height: 300, 
-            child: FutureBuilder<List<dynamic>>(
-              future: ApiService().getMaterialesObra(widget.obra['id']),
+            height: 300,
+            child: FutureBuilder<List<MaterialObra>>(
+              future: ApiService().getMaterialesObra(widget.obra.id),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -181,17 +182,6 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
                   itemBuilder: (context, index) {
                     final mat = materiales[index];
 
-                    final nombreMaterial =
-                        mat['nombre'] ??
-                        mat['material']?['nombre'] ??
-                        'Material desconocido';
-                    
-                    final cantidad =
-                        mat['cantidad_asignada'] ??
-                        mat['pivot']?['cantidad_asignada'] ??
-                        mat['cantidad'] ??
-                        0;
-
                     return Card(
                       elevation: 0,
                       color: Colors.grey.shade100,
@@ -202,11 +192,11 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
                           color: Colors.orange,
                         ),
                         title: Text(
-                          nombreMaterial,
+                          mat.nombre,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         trailing: Text(
-                          '$cantidad uds',
+                          '${mat.cantidadAsignada} uds', 
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.black87,
@@ -242,7 +232,7 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
                 style: TextStyle(color: AppColors.primaryDark),
               ),
               content: Column(
-                mainAxisSize: MainAxisSize.min, 
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: _nuevaTareaController,
@@ -265,11 +255,11 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
                       ),
                       initialValue: _empleadoSeleccionado,
                       isExpanded: true,
-                      items: _empleados.map((emp) {
+                      items: _empleados.map((Usuario emp) {
                         return DropdownMenuItem<int>(
-                          value: emp['id'],
+                          value: emp.id, 
                           child: Text(
-                            '${emp['nombre']} ${emp['apellidos']}',
+                            '${emp.nombre} ${emp.apellidos}', 
                             overflow: TextOverflow.ellipsis,
                           ),
                         );
@@ -328,18 +318,16 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
   // #region Pantalla Principal
   @override
   Widget build(BuildContext context) {
-    double progreso = widget.obra['progreso'] != null 
-        ? (widget.obra['progreso'] as num).toDouble() 
-        : 0.0;
-    
+    double progreso = widget.obra.progreso;
+
     if (!_cargando && _tareas.isNotEmpty) {
-      int tareasCompletadas = _tareas.where((tarea) {
-        return tarea['completada'] == true || tarea['completada'] == 1;
-      }).length;
-      
+      int tareasCompletadas = _tareas.where((tarea) => tarea.completada).length;
+
       progreso = tareasCompletadas / _tareas.length;
+   
+
     } else if (!_cargando && _tareas.isEmpty) {
-      progreso = 0.0; 
+      progreso = 0.0;
     }
 
     final bool esJefe = widget.rol == 'JEFE';
@@ -348,7 +336,7 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          widget.obra['nombre'],
+          widget.obra.nombre,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppColors.primary,
@@ -388,7 +376,7 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                widget.obra['ubicacion'],
+                                widget.obra.direccion,
                                 style: const TextStyle(fontSize: 16),
                               ),
                             ),
@@ -432,7 +420,7 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primaryDark,
                                 foregroundColor: AppColors.background,
-                                minimumSize: const Size(double.infinity, 48), 
+                                minimumSize: const Size(double.infinity, 48),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -441,7 +429,7 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
                                 final resultado = await showDialog(
                                   context: context,
                                   builder: (context) => DialogoAsignarMaterial(
-                                    obraId: widget.obra['id'],
+                                    obraId: widget.obra.id,
                                     apiService: ApiService(),
                                   ),
                                 );
@@ -452,24 +440,23 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
                               },
                             ),
                           ),
-                          const SizedBox(
-                            height: 12,
-                          ),
+                          const SizedBox(height: 12),
 
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
-                              onPressed: () => _mostrarDialogoMaterialesObra(context),
+                              onPressed: () =>
+                                  _mostrarDialogoMaterialesObra(context),
                               icon: const Icon(Icons.inventory_2),
                               label: const Text('Ver Materiales de la Obra'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryDark, 
-                                foregroundColor: AppColors.background, 
-                                minimumSize: const Size(double.infinity, 48), 
+                                backgroundColor: AppColors.primaryDark,
+                                foregroundColor: AppColors.background,
+                                minimumSize: const Size(double.infinity, 48),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                elevation: 2, 
+                                elevation: 2,
                               ),
                             ),
                           ),
@@ -542,35 +529,32 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
       return {'nombreCompleto': 'Sin asignar', 'iniciales': '??'};
     }
 
-    final empleado = _empleados.firstWhere(
-      (emp) => emp['id'] == empleadoId,
-      orElse: () => null,
-    );
+    try {
+      final empleado = _empleados.firstWhere((emp) => emp.id == empleadoId);
 
-    if (empleado == null) {
+      String nombre = empleado.nombre;
+      String apellidos = empleado.apellidos;
+
+      String inicialNombre = nombre.isNotEmpty ? nombre[0].toUpperCase() : '';
+      String inicialApellido = apellidos.isNotEmpty
+          ? apellidos[0].toUpperCase()
+          : '';
+
+      return {
+        'nombreCompleto': '$nombre $apellidos',
+        'iniciales': '$inicialNombre$inicialApellido',
+      };
+    } catch (e) {
       return {'nombreCompleto': 'Empleado no encontrado', 'iniciales': '??'};
     }
-
-    String nombre = empleado['nombre'] ?? '';
-    String apellidos = empleado['apellidos'] ?? '';
-
-    String inicialNombre = nombre.isNotEmpty ? nombre[0].toUpperCase() : '';
-    String inicialApellido = apellidos.isNotEmpty
-        ? apellidos[0].toUpperCase()
-        : '';
-
-    return {
-      'nombreCompleto': '$nombre $apellidos',
-      'iniciales': '$inicialNombre$inicialApellido',
-    };
   }
 
   Widget _crearTarjetaTarea(int index, bool esJefe) {
-    final tarea = _tareas[index];
+    final Tarea tarea = _tareas[index];
 
-    final int tareaId = tarea['id'];
-    final titulo = tarea['descripcion'] ?? 'Sin título';
-    final bool estaCompletada = tarea['completada'] == true;
+    final int tareaId = tarea.id;
+    final titulo = tarea.descripcion ?? 'Sin título';
+    final bool estaCompletada = tarea.completada;
 
     Color colorFondo = estaCompletada
         ? AppColors.background
@@ -605,7 +589,7 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
 
           subtitle: Builder(
             builder: (context) {
-              final datosEmp = _obtenerDatosEmpleado(tarea['empleado_id']);
+              final datosEmp = _obtenerDatosEmpleado(tarea.empleadoId);
               return Row(
                 children: [
                   CircleAvatar(
@@ -650,5 +634,6 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
       ),
     );
   }
+
   // #endregion
 }

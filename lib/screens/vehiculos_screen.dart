@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_colors.dart';
 import '../widgets/obradu_drawer.dart';
 import '../services/api_service.dart';
+import '../models/vehiculo.dart'; 
 
 // #region Widget Principal
 class VehiculosScreen extends StatefulWidget {
@@ -18,7 +19,7 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
   // #region Variables de Estado
   String _nombre = "";
   String _rol = "";
-  List<dynamic> _vehiculos = [];
+  List<Vehiculo> _vehiculos = []; 
   bool _cargando = true;
   // #endregion
 
@@ -108,11 +109,11 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
   // #endregion
 
   // #region Widgets Auxiliares
-  Widget _crearTarjetaVehiculo(Map<String, dynamic> vehiculo) {
-    final int id = vehiculo['id'];
-    final String matricula = vehiculo['matricula'];
-    final String modelo = vehiculo['modelo'];
-    final String estado = vehiculo['estado']; 
+  Widget _crearTarjetaVehiculo(Vehiculo vehiculo) {
+    final int id = vehiculo.id;
+    final String matricula = vehiculo.matricula;
+    final String modelo = vehiculo.modelo;
+    final String estado = vehiculo.estado; 
 
     Color colorBorde = AppColors.cardBorder;
     Color colorFondoIcono = Colors.grey.withValues(alpha: 0.2);
