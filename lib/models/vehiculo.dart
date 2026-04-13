@@ -14,7 +14,7 @@ class Vehiculo {
   factory Vehiculo.fromJson(Map<String, dynamic> json) {
     return Vehiculo(
       id: json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
-      matricula: json['matricula'] ?? 'Sin Matrícula',
+      matricula: json['matricula'] ?? 'Sin Matrícula',  
       modelo: json['modelo'] ?? 'Modelo Desconocido',
       estado: json['estado'] ?? 'DISPONIBLE',
     );

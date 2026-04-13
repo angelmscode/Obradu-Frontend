@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obradu/screens/home_screen.dart';
 import 'package:obradu/screens/panel_jefe_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart'; 
 import '../services/api_service.dart';
@@ -39,18 +40,26 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (exito) {
+      String rolUsuario = 'EMPLEADO'; 
+
       try {
         final prefs = await SharedPreferences.getInstance();
+        await Future.delayed(const Duration(milliseconds: 100)); 
+        
         final token = prefs.getString('token'); // Rescatar el token
 
         if (token != null) {
           final perfil = await ApiService.obtenerPerfil(token);
 
           if (perfil != null) {
-            await prefs.setString('rol', perfil['rol'] ?? 'EMPLEADO'); 
+            rolUsuario = perfil['rol'] ?? 'EMPLEADO';
+            await prefs.setString('rol', rolUsuario); 
             await prefs.setString('nombre', perfil['nombre'] ?? 'Usuario');
           }
         }
+        
+        await Future.delayed(const Duration(milliseconds: 200));
+
       } catch (e) {
         debugPrint("Error al guardar el perfil: $e");
       }
@@ -65,10 +74,17 @@ class _LoginScreenState extends State<LoginScreen> {
         const SnackBar(content: Text('¡Bienvenido a ObraDu!'), backgroundColor: Colors.green),
       );
       
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const PanelJefeScreen()),
-      );
+      if (rolUsuario == 'JEFE') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const PanelJefeScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()), 
+        );
+      }
       
     } else {
       setState(() {
@@ -83,6 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     }
   }
+  // #endregion
   // #endregion
 
   // #region Constructor de Interfaz (Build)

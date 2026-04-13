@@ -196,7 +196,7 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         trailing: Text(
-                          '${mat.cantidadAsignada} uds', 
+                          '${mat.cantidadAsignada} uds',
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.black87,
@@ -257,9 +257,9 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
                       isExpanded: true,
                       items: _empleados.map((Usuario emp) {
                         return DropdownMenuItem<int>(
-                          value: emp.id, 
+                          value: emp.id,
                           child: Text(
-                            '${emp.nombre} ${emp.apellidos}', 
+                            '${emp.nombre} ${emp.apellidos}',
                             overflow: TextOverflow.ellipsis,
                           ),
                         );
@@ -324,8 +324,6 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
       int tareasCompletadas = _tareas.where((tarea) => tarea.completada).length;
 
       progreso = tareasCompletadas / _tareas.length;
-   
-
     } else if (!_cargando && _tareas.isEmpty) {
       progreso = 0.0;
     }
@@ -551,7 +549,6 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
 
   Widget _crearTarjetaTarea(int index, bool esJefe) {
     final Tarea tarea = _tareas[index];
-
     final int tareaId = tarea.id;
     final titulo = tarea.descripcion ?? 'Sin título';
     final bool estaCompletada = tarea.completada;
@@ -574,62 +571,99 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
         side: const BorderSide(color: Colors.transparent),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4.0),
-        child: ListTile(
-          leading: Icon(icono, color: colorIcono),
-          title: Text(
-            titulo,
-            style: TextStyle(
-              decoration: estaCompletada ? TextDecoration.lineThrough : null,
-              color: estaCompletada
-                  ? AppColors.textSecondary
-                  : AppColors.textPrimary,
-            ),
-          ),
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          children: [
+            Icon(icono, color: colorIcono),
+            const SizedBox(width: 12),
 
-          subtitle: Builder(
-            builder: (context) {
-              final datosEmp = _obtenerDatosEmpleado(tarea.empleadoId);
-              return Row(
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    child: Text(
-                      datosEmp['iniciales']!,
-                      style: const TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
                   Text(
-                    'Asignado a: ${datosEmp['nombreCompleto']}',
-                    style: const TextStyle(fontSize: 12),
+                    titulo,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      decoration: estaCompletada
+                          ? TextDecoration.lineThrough
+                          : null,
+                      color: estaCompletada
+                          ? AppColors.textSecondary
+                          : AppColors.textPrimary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Builder(
+                    builder: (context) {
+                      final datosEmp = _obtenerDatosEmpleado(tarea.empleadoId);
+                      return Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 10,
+                            backgroundColor: AppColors.primary.withValues(
+                              alpha: 0.1,
+                            ),
+                            child: Text(
+                              datosEmp['iniciales']!,
+                              style: const TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              'Asignado a: ${datosEmp['nombreCompleto']}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
-              );
-            },
-          ),
-          trailing: estaCompletada
-              ? IconButton(
-                  icon: const Icon(Icons.undo, color: AppColors.textSecondary),
-                  tooltip: 'Deshacer tarea',
-                  onPressed: () => _deshacerTareaServer(tareaId),
-                )
-              : ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: esJefe
-                        ? AppColors.success
-                        : AppColors.primaryDark,
-                    foregroundColor: AppColors.background,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+            ),
+
+            const SizedBox(width: 8),
+            estaCompletada
+                ? IconButton(
+                    icon: const Icon(
+                      Icons.undo,
+                      color: AppColors.textSecondary,
+                    ),
+                    onPressed: () => _deshacerTareaServer(tareaId),
+                  )
+                : ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: esJefe
+                          ? AppColors.success
+                          : AppColors.primaryDark,
+                      foregroundColor: AppColors.background,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 0,
+                      ),
+                      visualDensity:
+                          VisualDensity.compact, 
+                    ),
+                    onPressed: () => _completarTareaServer(tareaId),
+                    child: Text(
+                      esJefe ? 'Aprobar' : 'Terminar',
+                      style: const TextStyle(fontSize: 12),
+                    ),
                   ),
-                  onPressed: () => _completarTareaServer(tareaId),
-                  child: Text(esJefe ? 'Aprobar' : 'Terminar'),
-                ),
+          ],
         ),
       ),
     );

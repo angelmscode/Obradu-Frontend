@@ -15,11 +15,10 @@ class EmpleadosScreen extends StatefulWidget {
 // #endregion
 
 class _EmpleadosScreenState extends State<EmpleadosScreen> {
-  
   // #region Variables de Estado
   String _nombre = "";
   String _rol = "";
-  List<Usuario> _empleados = []; 
+  List<Usuario> _empleados = [];
   bool _cargando = true;
 
   final _formKey = GlobalKey<FormState>();
@@ -228,6 +227,66 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
     );
   }
 
+  void _mostrarDetallesEmpleado(Usuario emp) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                child: Icon(Icons.person, size: 40, color: AppColors.primary),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '${emp.nombre} ${emp.apellidos}',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                emp.rol,
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const Divider(height: 32),
+              ListTile(
+                leading: const Icon(Icons.email_outlined),
+                title: const Text('Correo electrónico'),
+                subtitle: Text(emp.email),
+              ),
+              ListTile(
+                leading: const Icon(Icons.badge_outlined),
+                title: const Text('ID de Empleado'),
+                subtitle: Text('#${emp.id}'),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _mostrarDialogoAsignarObra(int empleadoId, String nombreCompleto) async {
     showDialog(
       context: context,
@@ -364,7 +423,12 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
               onRefresh: _cargarEmpleados,
               color: AppColors.primary,
               child: ListView.builder(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 16,
+                  bottom: 80,
+                ),
                 itemCount: _empleados.length,
                 itemBuilder: (context, index) {
                   final emp = _empleados[index];
@@ -377,96 +441,100 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(color: Colors.grey.shade300),
                     ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      leading: CircleAvatar(
-                        backgroundColor: esJefe
-                            ? AppColors.primary.withValues(alpha: 0.2)
-                            : Colors.grey.shade200,
-                        child: Icon(
-                          esJefe ? Icons.engineering : Icons.person,
-                          color: esJefe
-                              ? AppColors.primary
-                              : Colors.grey.shade700,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => _mostrarDetallesEmpleado(emp),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
                         ),
-                      ),
-                      title: Text(
-                        '${emp.nombre} ${emp.apellidos}', 
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 4),
-                          Text(
-                            emp.email, 
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 13,
-                            ),
+                        leading: CircleAvatar(
+                          backgroundColor: esJefe
+                              ? AppColors.primary.withValues(alpha: 0.2)
+                              : Colors.grey.shade200,
+                          child: Icon(
+                            esJefe ? Icons.engineering : Icons.person,
+                            color: esJefe
+                                ? AppColors.primary
+                                : Colors.grey.shade700,
                           ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: esJefe
-                                  ? AppColors.primary.withValues(alpha: 0.1)
-                                  : Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              emp.rol, 
+                        ),
+                        title: Text(
+                          '${emp.nombre} ${emp.apellidos}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(
+                              emp.email,
                               style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: esJefe
-                                    ? AppColors.primary
-                                    : Colors.grey.shade700,
+                                color: Colors.grey.shade600,
+                                fontSize: 13,
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: esJefe
+                                    ? AppColors.primary.withValues(alpha: 0.1)
+                                    : Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                emp.rol,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: esJefe
+                                      ? AppColors.primary
+                                      : Colors.grey.shade700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: _rol == 'JEFE'
+                            ? Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    tooltip: 'Asignar a Obra',
+                                    icon: const Icon(
+                                      Icons.add_business_outlined,
+                                      color: AppColors.primary,
+                                    ),
+                                    onPressed: () {
+                                      final nombreCompleto =
+                                          '${emp.nombre} ${emp.apellidos}';
+                                      _mostrarDialogoAsignarObra(
+                                        emp.id,
+                                        nombreCompleto,
+                                      );
+                                    },
+                                  ),
+                                  IconButton(
+                                    tooltip: 'Eliminar empleado',
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      color: AppColors.error,
+                                    ),
+                                    onPressed: () =>
+                                        _eliminar(emp.id, emp.nombre),
+                                  ),
+                                ],
+                              )
+                            : null,
                       ),
-                      trailing: _rol == 'JEFE'
-                          ? Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  tooltip: 'Asignar a Obra',
-                                  icon: const Icon(
-                                    Icons.add_business_outlined,
-                                    color: AppColors.primary,
-                                  ),
-                                  onPressed: () {
-                                    final nombreCompleto =
-                                        '${emp.nombre} ${emp.apellidos}'; 
-                                    _mostrarDialogoAsignarObra(
-                                      emp.id, 
-                                      nombreCompleto,
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  tooltip: 'Eliminar empleado',
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                    color: AppColors.error,
-                                  ),
-                                  onPressed: () =>
-                                      _eliminar(emp.id, emp.nombre), 
-                                ),
-                              ],
-                            )
-                          : null,
                     ),
                   );
                 },
@@ -474,5 +542,6 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
             ),
     );
   }
+
   // #endregion
 }

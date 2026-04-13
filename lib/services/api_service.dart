@@ -10,8 +10,7 @@ import '../models/vehiculo.dart';
 import '../models/material_obra.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:8000';
-
+  static const String baseUrl = 'http://127.0.0.1:8000';
   // #region Autenticación y Perfil
   Future<bool> login(String email, String password) async {
     try {
@@ -96,7 +95,7 @@ class ApiService {
       if (token == null) return false;
 
       final response = await http.post(
-        Uri.parse('$baseUrl/obras/'), 
+        Uri.parse('$baseUrl/obras/'),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
@@ -274,7 +273,6 @@ class ApiService {
       return [];
     }
   }
-
 
   Future<List<Usuario>> getEmpleadosObra(int obraId) async {
     try {
@@ -524,7 +522,34 @@ class ApiService {
       return false;
     }
   }
-  
+
+  Future<bool> anadirStockMaterial(int materialId, int cantidad) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return false;
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/materiales/$materialId/sumar-stock'),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'cantidad': cantidad}),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        debugPrint('Error al añadir stock: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('Error de red al añadir stock: $e');
+      return false;
+    }
+  }
+
   Future<bool> eliminarMaterial(int id) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -595,7 +620,6 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        // Decodificamos y convertimos cada mapa al nuevo objeto MaterialObra
         List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
         return body.map((item) => MaterialObra.fromJson(item)).toList();
       } else {
