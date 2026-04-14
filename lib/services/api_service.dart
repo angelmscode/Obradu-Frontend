@@ -92,33 +92,26 @@ class ApiService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
-      if (token == null) return false;
 
       final response = await http.post(
         Uri.parse('$baseUrl/obras/'),
         headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
+          'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
+
         body: jsonEncode({
           'nombre': nombre,
           'direccion': direccion,
           'fecha_inicio': DateTime.now().toIso8601String().split('T')[0],
         }),
       );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        debugPrint('Obra creada correctamente en el servidor');
-        return true;
-      } else {
-        debugPrint('Error al crear la obra: ${response.body}');
-        return false;
-      }
+      return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
-      debugPrint('Error de conexión en crearObra: $e');
       return false;
     }
   }
+
 
   Future<Map<String, dynamic>?> getEstadisticasPanel() async {
     final prefs = await SharedPreferences.getInstance();
@@ -141,6 +134,65 @@ class ApiService {
     }
   }
   // #endregion
+
+
+  // #region Jornada Laboral
+
+  // Iniciar jornada (Fichar entrada)
+  Future<int?> ficharEntrada(int obraId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return null;
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/asistencias/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'obra_id': obraId,
+          'empleado_id': 0, 
+          'tipo': 'ASISTENCIA',
+          'fecha': DateTime.now().toIso8601String().split('T')[0],
+          'descripcion': 'Jornada laboral',
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return data['id']; 
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error al fichar entrada: $e');
+      return null;
+    }
+  }
+
+  // Finalizar jornada (Fichar salida)
+  Future<bool> ficharSalida(int asistenciaId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return false;
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/asistencias/$asistenciaId/fichar_salida'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error al fichar salida: $e');
+      return false;
+    }
+  }
+  
 
   // #region Tareas (Asistencias)
   Future<List<Tarea>> getTareasObra(int obraId) async {
@@ -225,6 +277,49 @@ class ApiService {
       return false;
     }
   }
+
+ Future<bool> actualizarAsignacionTarea(int tareaId, int nuevoEmpleadoId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return false;
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/asistencias/$tareaId/asignar'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'empleado_id': nuevoEmpleadoId}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> reasignarTarea(int tareaId, int nuevoEmpleadoId) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    final response = await http.put(
+      Uri.parse('$baseUrl/asistencias/$tareaId/asignar'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'empleado_id': nuevoEmpleadoId,
+      }),
+    );
+
+    return response.statusCode == 200;
+  } catch (e) {
+    debugPrint('Error en reasignarTarea: $e');
+    return false;
+  }
+}
 
   Future<bool> deshacerTarea(int tareaId) async {
     try {
@@ -601,6 +696,28 @@ class ApiService {
       }
     } catch (e) {
       debugPrint('Error de conexión en asignarMaterialAObra: $e');
+      return false;
+    }
+  }
+
+  Future<bool> consumirMaterialObra(int obraId, int materialId, int cantidad) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return false;
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/obras/$obraId/materiales/$materialId/consumir'),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'cantidad': cantidad}),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error al consumir material: $e');
       return false;
     }
   }

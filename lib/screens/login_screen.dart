@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:obradu/screens/home_screen.dart';
 import 'package:obradu/screens/panel_jefe_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart'; 
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../theme/app_colors.dart';
 
@@ -15,7 +15,6 @@ class LoginScreen extends StatefulWidget {
 // #endregion
 
 class _LoginScreenState extends State<LoginScreen> {
-  
   // #region Variables de Estado y Controladores
   // Controladores para leer lo que el usuario escribe
   final TextEditingController _emailController = TextEditingController();
@@ -40,12 +39,12 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (exito) {
-      String rolUsuario = 'EMPLEADO'; 
+      String rolUsuario = 'EMPLEADO';
 
       try {
         final prefs = await SharedPreferences.getInstance();
-        await Future.delayed(const Duration(milliseconds: 100)); 
-        
+        await Future.delayed(const Duration(milliseconds: 100));
+
         final token = prefs.getString('token'); // Rescatar el token
 
         if (token != null) {
@@ -53,13 +52,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
           if (perfil != null) {
             rolUsuario = perfil['rol'] ?? 'EMPLEADO';
-            await prefs.setString('rol', rolUsuario); 
+            await prefs.setString('rol', rolUsuario);
             await prefs.setString('nombre', perfil['nombre'] ?? 'Usuario');
+
+            if (perfil['id'] != null) {
+              await prefs.setInt(
+                'usuario_id',
+                int.parse(perfil['id'].toString()),
+              );
+            }
           }
         }
-        
-        await Future.delayed(const Duration(milliseconds: 200));
 
+        await Future.delayed(const Duration(milliseconds: 200));
       } catch (e) {
         debugPrint("Error al guardar el perfil: $e");
       }
@@ -71,9 +76,12 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('¡Bienvenido a ObraDu!'), backgroundColor: Colors.green),
+        const SnackBar(
+          content: Text('¡Bienvenido a ObraDu!'),
+          backgroundColor: Colors.green,
+        ),
       );
-      
+
       if (rolUsuario == 'JEFE') {
         Navigator.pushReplacement(
           context,
@@ -82,10 +90,9 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()), 
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       }
-      
     } else {
       setState(() {
         _isLoading = false; // Carga finalizada si falla
@@ -100,9 +107,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
   // #endregion
-  // #endregion
 
-  // #region Constructor de Interfaz (Build)
+  // #region Constructor de Interfaz
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -145,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.lock),
                 ),
-                obscureText: true, 
+                obscureText: true,
               ),
               const SizedBox(height: 40),
 
@@ -172,5 +178,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+
   // #endregion
 }

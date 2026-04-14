@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obradu/screens/nueva_obra_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_colors.dart';
 import '../widgets/obradu_drawer.dart';
@@ -41,7 +42,7 @@ class _ObrasScreenState extends State<ObrasScreen> {
   }
   // #endregion
 
-  // #region Constructor de Interfaz (Build)
+  // #region Constructor de Interfaz
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,6 +53,26 @@ class _ObrasScreenState extends State<ObrasScreen> {
         foregroundColor: AppColors.background,
       ),
       drawer: ObraDuDrawer(nombre: _nombre, rol: _rol),
+
+      floatingActionButton: _rol == 'JEFE'
+          ? FloatingActionButton(
+              backgroundColor: AppColors.primary,
+              child: const Icon(Icons.add, color: Colors.white),
+              onPressed: () async { 
+                final resultado = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const NuevaObraScreen()),
+                );
+
+                if (resultado == true) {
+                  setState(() {
+                    _obrasFuture = ApiService().getObras();
+                  });
+                }
+              },
+            )
+          : null,
+
       body: FutureBuilder<List<Obra>>(
         future: _obrasFuture,
         builder: (context, snapshot) {

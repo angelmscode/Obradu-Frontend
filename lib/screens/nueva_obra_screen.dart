@@ -46,7 +46,7 @@ class _NuevaObraScreenState extends State<NuevaObraScreen> {
             backgroundColor: AppColors.success,
           ),
         );
-        Navigator.pop(context);
+        Navigator.pop(context, true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

@@ -21,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // #region Variables de Estado
   String _nombre = "Cargando...";
   String _rol = "";
+  int? _miId;
 
   Future<List<Obra>>? _obrasFuture;
   Duration _tiempoEfectivo = Duration.zero;
@@ -51,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _nombre = prefs.getString('nombre') ?? "Usuario";
       _rol = prefs.getString('rol') ?? "EMPLEADO";
+      _miId = prefs.getInt('usuario_id');
     });
   }
 
@@ -66,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   // #endregion
 
-  // #region Constructor de Interfaz (Build)
+  // #region Constructor de Interfaz
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,7 +111,10 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 24),
 
               // TARJETA DE FICHAJE
-              FichajeCard(onTiempoActualizado: _actualizarTiemposEnPantalla),
+              FichajeCard(
+                usuarioId: _miId!,
+                onTiempoActualizado: _actualizarTiemposEnPantalla,
+              ),
 
               const SizedBox(height: 32),
 
@@ -322,7 +327,6 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 // #endregion
 
-
 class ResumenJornadaCard extends StatelessWidget {
   final Duration tiempoEfectivo;
   final Duration tiempoPausa;
@@ -341,10 +345,14 @@ class ResumenJornadaCard extends StatelessWidget {
     final bool esPositivo = difSegundos >= 0;
     final Duration balanceAbsoluto = Duration(seconds: difSegundos.abs());
 
+    // Fecha de Hoy formateda
+    DateTime now = DateTime.now();
+    String hoy = "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
+
     String formatear(Duration d) {
       if (d.inHours > 0) return "${d.inHours}h ${d.inMinutes.remainder(60)}m";
       return "${d.inMinutes}m";
-    }
+    } 
 
     return Card(
       elevation: 2,
@@ -354,9 +362,22 @@ class ResumenJornadaCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Balance Diario",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Balance Diario",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  hoy,
+                  style: const TextStyle(
+                    fontSize: 14, 
+                    fontWeight: FontWeight.w500, 
+                    color: Colors.grey, 
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Row(
