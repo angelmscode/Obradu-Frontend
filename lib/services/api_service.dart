@@ -139,7 +139,7 @@ class ApiService {
   // #region Jornada Laboral
 
   // Iniciar jornada (Fichar entrada)
-  Future<int?> ficharEntrada(int obraId) async {
+  Future<int?> ficharEntrada(int obraId, int usuarioId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -153,7 +153,7 @@ class ApiService {
         },
         body: jsonEncode({
           'obra_id': obraId,
-          'empleado_id': 0, 
+          'empleado_id': usuarioId, 
           'tipo': 'ASISTENCIA',
           'fecha': DateTime.now().toIso8601String().split('T')[0],
           'descripcion': 'Jornada laboral',

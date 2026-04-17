@@ -24,8 +24,12 @@ class _HomeScreenState extends State<HomeScreen> {
   int? _miId;
 
   Future<List<Obra>>? _obrasFuture;
-  Duration _tiempoEfectivo = Duration.zero;
-  Duration _tiempoPausa = Duration.zero;
+  final ValueNotifier<Duration> _tiempoEfectivoNotifier = ValueNotifier(
+    Duration.zero,
+  );
+  final ValueNotifier<Duration> _tiempoPausaNotifier = ValueNotifier(
+    Duration.zero,
+  );
   // #endregion
 
   // #region Ciclo de Vida y Carga de Datos
@@ -33,6 +37,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _inicializarPantalla();
+  }
+
+  @override
+  void dispose() {
+    _tiempoEfectivoNotifier.dispose(); 
+    _tiempoPausaNotifier.dispose(); 
+    super.dispose();
   }
 
   Future<void> _inicializarPantalla() async {
@@ -57,14 +68,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _actualizarTiemposEnPantalla(Duration efectivo, Duration pausa) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {
-          _tiempoEfectivo = efectivo;
-          _tiempoPausa = pausa;
-        });
-      }
-    });
+    _tiempoEfectivoNotifier.value = efectivo;
+    _tiempoPausaNotifier.value = pausa;
   }
   // #endregion
 
@@ -210,8 +215,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // RESUMEN DE JORNADA
               ResumenJornadaCard(
-                tiempoEfectivo: _tiempoEfectivo,
-                tiempoPausa: _tiempoPausa,
+                tiempoEfectivoNotifier: _tiempoEfectivoNotifier,
+                tiempoPausaNotifier: _tiempoPausaNotifier,
               ),
 
               const SizedBox(height: 80),
@@ -328,159 +333,140 @@ class _HomeScreenState extends State<HomeScreen> {
 // #endregion
 
 class ResumenJornadaCard extends StatelessWidget {
-  final Duration tiempoEfectivo;
-  final Duration tiempoPausa;
-  final Duration jornadaStandard = const Duration(hours: 8);
+  final ValueNotifier<Duration> tiempoEfectivoNotifier;
+  final ValueNotifier<Duration> tiempoPausaNotifier;
 
   const ResumenJornadaCard({
     super.key,
-    required this.tiempoEfectivo,
-    required this.tiempoPausa,
+    required this.tiempoEfectivoNotifier,
+    required this.tiempoPausaNotifier,
   });
+
+  String formatear(Duration d) {
+    String dosDigitos(int n) => n.toString().padLeft(2, "0");
+    return "${dosDigitos(d.inHours)}:${dosDigitos(d.inMinutes.remainder(60))}:${dosDigitos(d.inSeconds.remainder(60))}";
+  }
 
   @override
   Widget build(BuildContext context) {
-    final int difSegundos =
-        tiempoEfectivo.inSeconds - jornadaStandard.inSeconds;
-    final bool esPositivo = difSegundos >= 0;
-    final Duration balanceAbsoluto = Duration(seconds: difSegundos.abs());
-
-    // Fecha de Hoy formateda
-    DateTime now = DateTime.now();
-    String hoy = "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
-
-    String formatear(Duration d) {
-      if (d.inHours > 0) return "${d.inHours}h ${d.inMinutes.remainder(60)}m";
-      return "${d.inMinutes}m";
-    } 
-
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "Balance Diario",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  hoy,
-                  style: const TextStyle(
-                    fontSize: 14, 
-                    fontWeight: FontWeight.w500, 
-                    color: Colors.grey, 
-                  ),
-                ),
-              ],
+            const Text(
+              "Resumen de Jornada",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
+            const SizedBox(height: 15),
+
+            AnimatedBuilder(
+              animation: Listenable.merge([
+                tiempoEfectivoNotifier,
+                tiempoPausaNotifier,
+              ]),
+              builder: (context, child) {
+                final efectivo = tiempoEfectivoNotifier.value;
+                final pausa = tiempoPausaNotifier.value;
+
+                final int balanceSegundos = efectivo.inSeconds - 28800;
+                final bool esPositivo = balanceSegundos >= 0;
+                final Duration balanceAbsoluto = Duration(
+                  seconds: balanceSegundos.abs(),
+                );
+
+                return Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(Icons.work_outline, color: AppColors.primary),
-                        const SizedBox(height: 8),
-                        const Text(
-                          "Trabajo Efectivo",
-                          style: TextStyle(fontSize: 12),
+                        _itemTiempo(
+                          "Efectivo",
+                          formatear(efectivo),
+                          Icons.timer,
+                          AppColors.primary,
                         ),
-                        Text(
-                          formatear(tiempoEfectivo),
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primaryDark,
-                          ),
+                        _itemTiempo(
+                          "Pausa",
+                          formatear(pausa),
+                          Icons.restaurant,
+                          Colors.orange,
                         ),
                       ],
                     ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.free_breakfast_outlined,
-                          color: Colors.orange.shade800,
-                        ),
-                        const SizedBox(height: 8),
-                        const Text("Descanso", style: TextStyle(fontSize: 12)),
-                        Text(
-                          formatear(tiempoPausa),
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.orange.shade800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: esPositivo ? Colors.green.shade50 : Colors.red.shade50,
-                border: Border.all(
-                  color: esPositivo
-                      ? Colors.green.shade200
-                      : Colors.red.shade200,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    esPositivo
-                        ? Icons.check_circle_outline
-                        : Icons.warning_amber_rounded,
-                    color: esPositivo
-                        ? Colors.green.shade700
-                        : Colors.red.shade700,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      esPositivo
-                          ? "Jornada completada (+${formatear(balanceAbsoluto)} extra)"
-                          : "Por cumplir: ${formatear(balanceAbsoluto)}",
-                      style: TextStyle(
+                    const SizedBox(height: 15),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
                         color: esPositivo
-                            ? Colors.green.shade800
-                            : Colors.red.shade800,
-                        fontWeight: FontWeight.bold,
+                            ? Colors.green.shade50
+                            : Colors.red.shade50,
+                        border: Border.all(
+                          color: esPositivo
+                              ? Colors.green.shade200
+                              : Colors.red.shade200,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            esPositivo
+                                ? Icons.check_circle_outline
+                                : Icons.warning_amber_rounded,
+                            color: esPositivo
+                                ? Colors.green.shade700
+                                : Colors.red.shade700,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              esPositivo
+                                  ? "Jornada completada (+${formatear(balanceAbsoluto)} extra)"
+                                  : "Por cumplir: ${formatear(balanceAbsoluto)}",
+                              style: TextStyle(
+                                color: esPositivo
+                                    ? Colors.green.shade800
+                                    : Colors.red.shade800,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                );
+              },
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _itemTiempo(String label, String valor, IconData icon, Color color) {
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            Text(
+              valor,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

@@ -64,7 +64,7 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
     });
 
     setState(() {
-      _tareas = tareasOrdenadas;
+      _tareas = tareasOrdenadas.where((t) => t.tipo == 'TAREA').toList();
       _cargando = false;
     });
   }

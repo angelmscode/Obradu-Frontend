@@ -240,7 +240,7 @@ class _FichajeCardState extends State<FichajeCard> {
 
     if (!_enJornada) {
       int? nuevoAsistenciaId = await ApiService().ficharEntrada(
-        _obraSeleccionadaId!,
+        _obraSeleccionadaId!, widget.usuarioId
       );
 
       if (!mounted) return;
