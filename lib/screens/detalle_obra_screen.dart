@@ -53,6 +53,8 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
     setState(() => _cargando = true);
     final tareasServidor = await ApiService().getTareasObra(widget.obra.id);
 
+    if (!mounted) return;
+
     List<Tarea> tareasOrdenadas = List.from(tareasServidor);
 
     tareasOrdenadas.sort((a, b) {
@@ -67,24 +69,25 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
     });
   }
 
-  // Función para cargar los empleados
   Future<void> _cargarEmpleados() async {
     final empleados = await ApiService().getEmpleadosObra(widget.obra.id);
-    if (mounted) {
-      setState(() {
-        _empleados = empleados;
-        if (widget.rol == 'JEFE' && _empleados.isNotEmpty) {
-          _empleadoSeleccionado = _empleados[0].id;
-        }
-      });
-    }
+    if (!mounted) return;
+
+    setState(() {
+      _empleados = empleados;
+      if (widget.rol == 'JEFE' && _empleados.isNotEmpty) {
+        _empleadoSeleccionado = _empleados[0].id;
+      }
+    });
   }
 
   void _guardarNuevaTarea() async {
     final texto = _nuevaTareaController.text.trim();
     if (texto.isEmpty) return;
 
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
     Navigator.pop(context);
+
     setState(() => _cargando = true);
 
     final exito = await ApiService().crearTarea(
@@ -97,69 +100,68 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
       _nuevaTareaController.clear();
       await _cargarTareas();
     } else {
-      setState(() => _cargando = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al guardar la tarea'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      if (mounted) setState(() => _cargando = false);
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('Error al guardar la tarea'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
   Future<void> _completarTareaServer(int tareaId) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
     setState(() => _cargando = true);
     final exito = await ApiService().completarTarea(tareaId);
+
     if (exito) {
       await _cargarTareas();
     } else {
-      setState(() => _cargando = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al completar la tarea.'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      if (mounted) setState(() => _cargando = false);
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('Error al completar la tarea.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
   Future<void> _reasignarTareaServer(int tareaId, int nuevoEmpleadoId) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
     final exito = await ApiService().reasignarTarea(tareaId, nuevoEmpleadoId);
+
     if (exito) {
-      _cargarTareas();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tarea reasignada con éxito')),
-        );
-      }
+      await _cargarTareas();
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Tarea reasignada con éxito')),
+      );
     } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al reasignar la tarea')),
-        );
-      }
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Error al reasignar la tarea')),
+      );
     }
   }
 
   Future<void> _deshacerTareaServer(int tareaId) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
     setState(() => _cargando = true);
     final exito = await ApiService().deshacerTarea(tareaId);
+
     if (exito) {
       await _cargarTareas();
     } else {
-      setState(() => _cargando = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al deshacer la tarea'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      if (mounted) setState(() => _cargando = false);
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('Error al deshacer la tarea'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
   // #endregion
@@ -167,19 +169,22 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
   // #region Diálogos
 
   Future<void> _mostrarDialogoConsumirMaterial(int tareaId) async {
-    // Cargamos los materiales que hay actualmente en esta obra
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
     final materialesObra = await ApiService().getMaterialesObra(widget.obra.id);
-    final materialesDisponibles = materialesObra.where((m) => m.cantidadAsignada > 0).toList();
+    final materialesDisponibles = materialesObra
+        .where((m) => m.cantidadAsignada > 0)
+        .toList();
+
+    if (!mounted) return;
 
     if (materialesDisponibles.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No hay materiales con stock en esta obra.')),
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('No hay materiales con stock en esta obra.'),
+        ),
       );
       return;
     }
-
-    if (!mounted) return;
 
     int? materialSeleccionado;
     final TextEditingController cantController = TextEditingController();
@@ -196,13 +201,19 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
                 isExpanded: true,
                 initialValue: materialSeleccionado,
                 hint: const Text("Selecciona el material"),
-                items: materialesDisponibles.map((m) {
-                  return DropdownMenuItem(
-                    value: m.id,
-                    child: Text("${m.nombre} (Stock: ${m.cantidadAsignada})", overflow: TextOverflow.ellipsis),
-                  );
-                }).toList(),
-                onChanged: (val) => setDialogState(() => materialSeleccionado = val),
+                items: {for (var m in materialesDisponibles) m.id: m}.values
+                    .map((m) {
+                      return DropdownMenuItem<int>(
+                        value: m.id,
+                        child: Text(
+                          "${m.nombre} (Stock: ${m.cantidadAsignada})",
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      );
+                    })
+                    .toList(),
+                onChanged: (val) =>
+                    setDialogState(() => materialSeleccionado = val),
               ),
               const SizedBox(height: 16),
               TextField(
@@ -217,30 +228,46 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
-              if (materialSeleccionado == null || cantController.text.isEmpty) return;
-              
+              if (materialSeleccionado == null || cantController.text.isEmpty) {
+                return;
+              }
+
               int cant = int.tryParse(cantController.text) ?? 0;
               if (cant <= 0) return;
 
               final navigator = Navigator.of(context);
-              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final messenger = ScaffoldMessenger.of(context);
 
-              bool exito = await ApiService().consumirMaterialObra(widget.obra.id, materialSeleccionado!, cant);
+              bool exito = await ApiService().consumirMaterialObra(
+                widget.obra.id,
+                materialSeleccionado!,
+                cant,
+              );
 
-              if (!mounted) return;
               navigator.pop();
 
               if (exito) {
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(content: Text('Material descontado de la obra con éxito')),
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Material descontado de la obra con éxito'),
+                  ),
                 );
               } else {
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(content: Text('Error al gastar material (revisa el stock)'), backgroundColor: Colors.red),
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Error al gastar material (revisa el stock)'),
+                    backgroundColor: Colors.red,
+                  ),
                 );
               }
             },
@@ -250,7 +277,6 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
       ),
     );
   }
-
 
   void _mostrarDialogoMaterialesObra(BuildContext context) {
     showDialog(
@@ -358,7 +384,14 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
                           vertical: 8,
                         ),
                       ),
-                      initialValue: _empleadoSeleccionado,
+                      initialValue:
+                          _empleados.any(
+                            (emp) => emp.id == _empleadoSeleccionado,
+                          )
+                          ? _empleadoSeleccionado
+                          : (_empleados.isNotEmpty
+                                ? _empleados.first.id
+                                : null),
                       isExpanded: true,
                       items: _empleados.map((Usuario emp) {
                         return DropdownMenuItem<int>(
@@ -740,12 +773,20 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
               ),
             ),
 
+            if (!estaCompletada)
+              IconButton(
+                icon: const Icon(Icons.handyman, color: Colors.orange),
+                tooltip: 'Gastar Material',
+                onPressed: () => _mostrarDialogoConsumirMaterial(tareaId),
+              ),
+
             if (widget.rol == 'JEFE' && !estaCompletada)
               IconButton(
                 icon: const Icon(
                   Icons.person_add_alt_1,
                   color: AppColors.primary,
                 ),
+                tooltip: 'Reasignar Tarea',
                 onPressed: () {
                   showDialog(
                     context: context,
@@ -754,7 +795,8 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
                       return AlertDialog(
                         title: const Text('Reasignar Tarea'),
                         content: DropdownButtonFormField<int>(
-                          items: _empleados
+                          items: {for (var emp in _empleados) emp.id: emp}
+                              .values
                               .map(
                                 (e) => DropdownMenuItem(
                                   value: e.id,
@@ -775,8 +817,9 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
                           ElevatedButton(
                             onPressed: () {
                               if (seleccionado != null) {
+                                final navigator = Navigator.of(context);
                                 _reasignarTareaServer(tareaId, seleccionado!);
-                                Navigator.pop(context);
+                                navigator.pop();
                               }
                             },
                             child: const Text('Asignar'),
