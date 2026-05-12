@@ -22,6 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _nombre = "Cargando...";
   String _rol = "";
   int? _miId;
+  String _miEmpresa = "";
 
   Future<List<Obra>>? _obrasFuture;
   final ValueNotifier<Duration> _tiempoEfectivoNotifier = ValueNotifier(
@@ -64,6 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _nombre = prefs.getString('nombre') ?? "Usuario";
       _rol = prefs.getString('rol') ?? "EMPLEADO";
       _miId = prefs.getInt('usuario_id');
+      _miEmpresa = prefs.getString('empresa') ?? "EmpresaDefault";
     });
   }
 
@@ -108,6 +110,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: AppColors.textPrimary,
                 ),
               ),
+
+              Text(
+                'Empresa: $_miEmpresa',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              
               const SizedBox(height: 8),
               const Text(
                 'Aquí tienes el resumen de tu jornada y obras.',
@@ -116,10 +128,13 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 24),
 
               // TARJETA DE FICHAJE
-              FichajeCard(
-                usuarioId: _miId!,
-                onTiempoActualizado: _actualizarTiemposEnPantalla,
-              ),
+              if (_miId == null)
+                const Center(child: CircularProgressIndicator())
+              else
+                FichajeCard(
+                  usuarioId: _miId!, 
+                  onTiempoActualizado: _actualizarTiemposEnPantalla,
+                ),
 
               const SizedBox(height: 32),
 
@@ -307,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            obra.direccion,
+                            obra.direccion ?? "",
                             style: const TextStyle(
                               fontSize: 13,
                               color: AppColors.textSecondary,

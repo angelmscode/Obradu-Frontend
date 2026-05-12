@@ -17,11 +17,10 @@ class ObrasScreen extends StatefulWidget {
 // #endregion
 
 class _ObrasScreenState extends State<ObrasScreen> {
-  
   // #region Variables de Estado
   String _nombre = "";
   String _rol = "";
-  
+
   late Future<List<Obra>> _obrasFuture;
   // #endregion
 
@@ -48,7 +47,10 @@ class _ObrasScreenState extends State<ObrasScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Mis Obras', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Mis Obras',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: AppColors.primaryDark,
         foregroundColor: AppColors.background,
       ),
@@ -58,10 +60,12 @@ class _ObrasScreenState extends State<ObrasScreen> {
           ? FloatingActionButton(
               backgroundColor: AppColors.primary,
               child: const Icon(Icons.add, color: Colors.white),
-              onPressed: () async { 
+              onPressed: () async {
                 final resultado = await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const NuevaObraScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const NuevaObraScreen(),
+                  ),
                 );
 
                 if (resultado == true) {
@@ -77,7 +81,9 @@ class _ObrasScreenState extends State<ObrasScreen> {
         future: _obrasFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            );
           } else if (snapshot.hasError) {
             return Center(child: Text('Error de conexión: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -106,8 +112,8 @@ class _ObrasScreenState extends State<ObrasScreen> {
 
   // #region Widgets Auxiliares
   Widget _crearTarjetaObra(Obra obra) {
-    double progreso = obra.progreso; 
-    
+    double progreso = obra.progreso;
+
     String estado = progreso >= 1.0 ? 'Finalizada' : 'En progreso';
 
     return Card(
@@ -141,7 +147,10 @@ class _ObrasScreenState extends State<ObrasScreen> {
                       color: AppColors.primary.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.business, color: AppColors.primaryDark),
+                    child: const Icon(
+                      Icons.business,
+                      color: AppColors.primaryDark,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -150,17 +159,28 @@ class _ObrasScreenState extends State<ObrasScreen> {
                       children: [
                         Text(
                           obra.nombre,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(Icons.location_on, size: 14, color: AppColors.textSecondary),
+                            const Icon(
+                              Icons.location_on,
+                              size: 14,
+                              color: AppColors.textSecondary,
+                            ),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                obra.direccion,
-                                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                                obra.direccion ?? "",
+                                style: const TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 13,
+                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -177,9 +197,18 @@ class _ObrasScreenState extends State<ObrasScreen> {
                 children: [
                   Text(
                     estado,
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryDark),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryDark,
+                    ),
                   ),
-                  Text('${(progreso * 100).toInt()}%', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  Text(
+                    '${(progreso * 100).toInt()}%',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -196,5 +225,6 @@ class _ObrasScreenState extends State<ObrasScreen> {
       ),
     );
   }
+
   // #endregion
 }

@@ -1,3 +1,5 @@
+import 'package:obradu/models/material_obra.dart';
+
 class Tarea {
   final int id;
   final int empleadoId;
@@ -6,6 +8,7 @@ class Tarea {
   final String? descripcion;
   final String fecha;
   final bool completada;
+  List<MaterialObra> materiales;
   final String? horaEntrada;
   final String? horaSalida;
 
@@ -17,6 +20,7 @@ class Tarea {
     this.descripcion,
     required this.fecha,
     required this.completada,
+    this.materiales = const [], 
     this.horaEntrada,
     this.horaSalida,
   });
@@ -30,6 +34,11 @@ class Tarea {
       descripcion: json['descripcion'],
       fecha: json['fecha'] ?? '',
       completada: json['completada'] == true || json['completada'] == 1,
+      materiales: json['materiales'] != null
+          ? (json['materiales'] as List)
+              .map((m) => MaterialObra.fromJson(m))
+              .toList()
+          : [],
       horaEntrada: json['hora_entrada'],
       horaSalida: json['hora_salida'],
     );

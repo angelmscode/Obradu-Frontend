@@ -1,7 +1,7 @@
 class Obra {
   final int id;
   final String nombre;
-  final String direccion;
+  final String? direccion;
   final String fechaInicio;
   final String? fechaFin; 
   final double? presupuesto; 
@@ -20,15 +20,19 @@ class Obra {
   });
 
   factory Obra.fromJson(Map<String, dynamic> json) {
-    return Obra(
-      id: json['id'],
-      nombre: json['nombre'],
-      direccion: json['direccion'],
-      fechaInicio: json['fecha_inicio'],
-      fechaFin: json['fecha_fin'],
-      presupuesto: json['presupuesto'] != null ? double.parse(json['presupuesto'].toString()) : null,
-      progreso: json['progreso'] != null ? double.parse(json['progreso'].toString()) : 0.0,
-      jefeId: json['jefe_id'],
-    );
-  }
+  return Obra(
+    id: json['id'] ?? 0,
+    nombre: json['nombre'] ?? 'Sin nombre',
+    direccion: json['direccion'], 
+    fechaInicio: json['fecha_inicio'] ?? '',
+    fechaFin: json['fecha_fin'],
+    presupuesto: json['presupuesto'] != null 
+        ? double.tryParse(json['presupuesto'].toString()) 
+        : null,
+    progreso: json['progreso'] != null 
+        ? double.tryParse(json['progreso'].toString()) ?? 0.0 
+        : 0.0,
+    jefeId: json['jefe_id'] ?? 0,
+  );
+}
 }

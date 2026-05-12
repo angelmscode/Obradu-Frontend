@@ -10,7 +10,7 @@ import '../models/vehiculo.dart';
 import '../models/material_obra.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://127.0.0.1:8000';
+  static const String baseUrl = 'http://192.168.1.35:8000';
   // #region Autenticación y Perfil
   Future<bool> login(String email, String password) async {
     try {
@@ -278,7 +278,9 @@ class ApiService {
     }
   }
 
- Future<bool> actualizarAsignacionTarea(int tareaId, int nuevoEmpleadoId) async {
+
+
+   Future<bool> reasignarTarea(int tareaId, int nuevoEmpleadoId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -287,40 +289,21 @@ class ApiService {
       final response = await http.put(
         Uri.parse('$baseUrl/asistencias/$tareaId/asignar'),
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({'empleado_id': nuevoEmpleadoId}),
       );
+
+      if (response.statusCode != 200) {
+        debugPrint('Error al reasignar tarea: ${response.statusCode} - ${response.body}');
+      }
       return response.statusCode == 200;
     } catch (e) {
+      debugPrint('Error en reasignarTarea: $e');
       return false;
     }
   }
-
-  Future<bool> reasignarTarea(int tareaId, int nuevoEmpleadoId) async {
-  try {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-
-    final response = await http.put(
-      Uri.parse('$baseUrl/asistencias/$tareaId/asignar'),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'empleado_id': nuevoEmpleadoId,
-      }),
-    );
-
-    return response.statusCode == 200;
-  } catch (e) {
-    debugPrint('Error en reasignarTarea: $e');
-    return false;
-  }
-}
-
   Future<bool> deshacerTarea(int tareaId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -394,14 +377,30 @@ class ApiService {
     }
   }
 
-  Future<bool> crearEmpleado(Map<String, dynamic> datos) async {
+   Future<bool> crearEmpleado(Map<String, dynamic> datos) async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) {
+        debugPrint('Error al crear empleado: no hay sesión activa');
+        return false;
+      }
+
       final response = await http.post(
         Uri.parse('$baseUrl/usuarios/registro'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
         body: jsonEncode(datos),
       );
-      return (response.statusCode == 200 || response.statusCode == 201);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        debugPrint('Error al crear empleado: ${response.statusCode} - ${response.body}');
+        return false;
+      }
     } catch (e) {
       debugPrint('Error al crear empleado: $e');
       return false;
@@ -575,6 +574,10 @@ class ApiService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
+      if (token == null) {
+        debugPrint('Error en getMateriales: no hay sesión activa');
+        return [];
+      }
 
       final response = await http.get(
         Uri.parse('$baseUrl/materiales/'),

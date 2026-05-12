@@ -4,6 +4,7 @@ class Usuario {
   final String apellidos;
   final String email;
   final String rol;
+  final String nombreEmpresa;
 
   Usuario({
     required this.id,
@@ -11,6 +12,7 @@ class Usuario {
     required this.apellidos,
     required this.email,
     required this.rol,
+    required this.nombreEmpresa,
   });
 
   factory Usuario.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,9 @@ class Usuario {
       apellidos: json['apellidos'] ?? '',
       email: json['email'] ?? 'Sin Email',
       rol: json['rol'] ?? 'EMPLEADO', 
+      nombreEmpresa: json['empresa'] != null 
+          ? json['empresa']['nombre'] 
+          : 'Sin Empresa',
     );
   }
 }

@@ -512,7 +512,7 @@ class _DetalleObraScreenState extends State<DetalleObraScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                widget.obra.direccion,
+                                widget.obra.direccion ?? "Sin direccion",
                                 style: const TextStyle(fontSize: 16),
                               ),
                             ),
