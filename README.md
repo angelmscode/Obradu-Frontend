@@ -41,21 +41,11 @@ cd ObraDu-Frontend
 flutter pub get
 ```
 
-
-### 3. Configurar la conexión al Backend
-
-#### - Abre el archivo lib/services/api_service.dart. Asegúrate de que la variable baseUrl apunte a la dirección donde se está ejecutando el backend.
-
-```bash
-static const String baseUrl = "http://10.0.2.2:8000"
-```
-
-
-### 4. Ejecutar la aplicación
+### 3. Ejecutar la aplicación
 
 #### - En la terminal estando en la carpeta "Obradu-Frontend" ejecuta este comando:
 
 ```bash
-flutter run
+flutter run --dart-define=API_URL=http://cloning-sullen-eel.ngrok-free.dev:8000
 ```
 
