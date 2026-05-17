@@ -10,7 +10,18 @@ import '../models/vehiculo.dart';
 import '../models/material_obra.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.1.35:8000';
+  static const String baseUrl = String.fromEnvironment(
+    'API_URL',
+    defaultValue: 'http://10.0.2.2:8000',
+  );
+
+  // #region Token Helper
+  Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+  // #endregion
+
   // #region Autenticación y Perfil
   Future<bool> login(String email, String password) async {
     try {
@@ -22,9 +33,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final prefs = await SharedPreferences.getInstance();
-
         await prefs.setString('token', data['access_token']);
-
         debugPrint('¡Login correcto! Token guardado.');
         return true;
       } else {
@@ -59,9 +68,7 @@ class ApiService {
   // #region Obras y Panel
   Future<List<Obra>> getObras() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-
+      final token = await _getToken();
       if (token == null) {
         debugPrint('No hay token, el usuario no está logueado');
         return [];
@@ -90,8 +97,8 @@ class ApiService {
 
   Future<bool> crearObra(String nombre, String direccion) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
+      if (token == null) return false;
 
       final response = await http.post(
         Uri.parse('$baseUrl/obras/'),
@@ -99,7 +106,6 @@ class ApiService {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-
         body: jsonEncode({
           'nombre': nombre,
           'direccion': direccion,
@@ -112,37 +118,40 @@ class ApiService {
     }
   }
 
-
+   
   Future<Map<String, dynamic>?> getEstadisticasPanel() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-
-    if (token == null) throw Exception('No hay token de sesión');
-
-    final response = await http.get(
-      Uri.parse('$baseUrl/obras/estadisticas/panel-jefe'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Error al cargar estadísticas: ${response.body}');
+    try {
+      final token = await _getToken();
+      if (token == null) {
+        debugPrint('Error en getEstadisticasPanel: no hay sesión activa');
+        return null;
+      }
+ 
+      final response = await http.get(
+        Uri.parse('$baseUrl/obras/estadisticas/panel-jefe'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+ 
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        debugPrint('Error al cargar estadísticas: ${response.statusCode} - ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('Error de conexión en getEstadisticasPanel: $e');
+      return null;
     }
   }
   // #endregion
 
-
   // #region Jornada Laboral
-
-  // Iniciar jornada (Fichar entrada)
   Future<int?> ficharEntrada(int obraId, int usuarioId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return null;
 
       final response = await http.post(
@@ -153,7 +162,7 @@ class ApiService {
         },
         body: jsonEncode({
           'obra_id': obraId,
-          'empleado_id': usuarioId, 
+          'empleado_id': usuarioId,
           'tipo': 'ASISTENCIA',
           'fecha': DateTime.now().toIso8601String().split('T')[0],
           'descripcion': 'Jornada laboral',
@@ -162,7 +171,7 @@ class ApiService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        return data['id']; 
+        return data['id'];
       }
       return null;
     } catch (e) {
@@ -171,11 +180,9 @@ class ApiService {
     }
   }
 
-  // Finalizar jornada (Fichar salida)
   Future<bool> ficharSalida(int asistenciaId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return false;
 
       final response = await http.put(
@@ -192,13 +199,12 @@ class ApiService {
       return false;
     }
   }
-  
+  // #endregion
 
   // #region Tareas (Asistencias)
   Future<List<Tarea>> getTareasObra(int obraId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return [];
 
       final response = await http.get(
@@ -228,8 +234,7 @@ class ApiService {
     int? empleadoId,
   }) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return false;
 
       final perfil = await obtenerPerfil(token);
@@ -259,8 +264,7 @@ class ApiService {
 
   Future<bool> completarTarea(int tareaId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return false;
 
       final response = await http.put(
@@ -278,12 +282,11 @@ class ApiService {
     }
   }
 
-
-
-   Future<bool> reasignarTarea(int tareaId, int nuevoEmpleadoId) async {
+  // Antes existían dos funciones idénticas (actualizarAsignacionTarea y reasignarTarea).
+  // Se han unificado en una sola con el nombre más descriptivo.
+  Future<bool> reasignarTarea(int tareaId, int nuevoEmpleadoId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return false;
 
       final response = await http.put(
@@ -304,10 +307,10 @@ class ApiService {
       return false;
     }
   }
+
   Future<bool> deshacerTarea(int tareaId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return false;
 
       final response = await http.put(
@@ -326,11 +329,10 @@ class ApiService {
   }
   // #endregion
 
-  // #region Empleados y Rrhh
+  // #region Empleados y RRHH
   Future<List<Usuario>> getEmpleados() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return [];
 
       final response = await http.get(
@@ -354,8 +356,7 @@ class ApiService {
 
   Future<List<Usuario>> getEmpleadosObra(int obraId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return [];
 
       final response = await http.get(
@@ -377,10 +378,9 @@ class ApiService {
     }
   }
 
-   Future<bool> crearEmpleado(Map<String, dynamic> datos) async {
+  Future<bool> crearEmpleado(Map<String, dynamic> datos) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) {
         debugPrint('Error al crear empleado: no hay sesión activa');
         return false;
@@ -409,8 +409,7 @@ class ApiService {
 
   Future<bool> eliminarEmpleado(int empleadoId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return false;
 
       final response = await http.delete(
@@ -426,8 +425,7 @@ class ApiService {
 
   Future<bool> asignarEmpleadoAObra(int obraId, int empleadoId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return false;
 
       final response = await http.post(
@@ -453,8 +451,7 @@ class ApiService {
   // #region Vehículos y Flota
   Future<List<Vehiculo>> getVehiculos() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return [];
 
       final response = await http.get(
@@ -478,8 +475,7 @@ class ApiService {
 
   Future<bool> reservarVehiculo(int vehiculoId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return false;
 
       final perfil = await obtenerPerfil(token);
@@ -507,8 +503,7 @@ class ApiService {
 
   Future<bool> devolverVehiculo(int vehiculoId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return false;
 
       final response = await http.put(
@@ -528,8 +523,7 @@ class ApiService {
 
   Future<bool> enviarVehiculoTaller(int vehiculoId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return false;
 
       final response = await http.put(
@@ -549,8 +543,7 @@ class ApiService {
 
   Future<bool> recuperarVehiculoTaller(int vehiculoId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return false;
 
       final response = await http.put(
@@ -572,8 +565,7 @@ class ApiService {
   // #region Inventario y Materiales
   Future<List<MaterialInventario>> getMateriales() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) {
         debugPrint('Error en getMateriales: no hay sesión activa');
         return [];
@@ -602,8 +594,8 @@ class ApiService {
 
   Future<bool> crearMaterial(Map<String, dynamic> datos) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
+      if (token == null) return false;
 
       final response = await http.post(
         Uri.parse('$baseUrl/materiales/'),
@@ -623,8 +615,7 @@ class ApiService {
 
   Future<bool> anadirStockMaterial(int materialId, int cantidad) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return false;
 
       final response = await http.post(
@@ -650,8 +641,8 @@ class ApiService {
 
   Future<bool> eliminarMaterial(int id) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
+      if (token == null) return false;
 
       final response = await http.delete(
         Uri.parse('$baseUrl/materiales/$id'),
@@ -674,8 +665,7 @@ class ApiService {
     int cantidad,
   ) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return false;
 
       final response = await http.post(
@@ -705,8 +695,7 @@ class ApiService {
 
   Future<bool> consumirMaterialObra(int obraId, int materialId, int cantidad) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return false;
 
       final response = await http.put(
@@ -727,8 +716,7 @@ class ApiService {
 
   Future<List<MaterialObra>> getMaterialesObra(int obraId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await _getToken();
       if (token == null) return [];
 
       final response = await http.get(
@@ -753,6 +741,5 @@ class ApiService {
       return [];
     }
   }
-
   // #endregion
 }

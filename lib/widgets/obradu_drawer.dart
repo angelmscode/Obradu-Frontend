@@ -135,6 +135,9 @@ class ObraDuDrawer extends StatelessWidget {
               // Borramos el token de la memoria
               final prefs = await SharedPreferences.getInstance();
               await prefs.remove('token');
+              await prefs.remove('rol');
+              await prefs.remove('nombre');
+              await prefs.remove('usuario_id');
 
               if (context.mounted) {
                 Navigator.pushAndRemoveUntil(
