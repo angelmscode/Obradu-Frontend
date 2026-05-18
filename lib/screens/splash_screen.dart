@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_colors.dart';
+import '../services/api_service.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
 import 'panel_jefe_screen.dart';
@@ -30,29 +31,44 @@ class _SplashScreenState extends State<SplashScreen> {
 
     final prefs = await SharedPreferences.getInstance();
     final String? token = prefs.getString('token');
-    final String? rol = prefs.getString('rol'); 
 
     if (!mounted) return;
 
-    if (token != null) {
-      if (rol == 'JEFE') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const PanelJefeScreen()),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      }
-    } else {
-      // Si no hay llave, a logearse
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
+    if (token == null) {
+      _navegarA(const LoginScreen());
+      return;
     }
+
+    // Validar el token contra el servidor antes de navegar
+    final perfil = await ApiService.obtenerPerfil(token);
+
+    if (!mounted) return;
+
+    if (perfil != null) {
+      // Token válido — actualizamos el rol por si cambió y navegamos
+      final String rol = perfil['rol'] ?? prefs.getString('rol') ?? 'EMPLEADO';
+      await prefs.setString('rol', rol);
+
+      if (!mounted) return;
+
+      _navegarA(rol == 'JEFE' ? const PanelJefeScreen() : const HomeScreen());
+    } else {
+      // Token caducado o inválido — limpiamos y mandamos al login
+      await prefs.remove('token');
+      await prefs.remove('rol');
+      await prefs.remove('nombre');
+      await prefs.remove('usuario_id');
+
+      if (!mounted) return;
+      _navegarA(const LoginScreen());
+    }
+  }
+
+  void _navegarA(Widget pantalla) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => pantalla),
+    );
   }
   // #endregion
 

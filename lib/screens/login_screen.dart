@@ -40,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (exito) {
       String rolUsuario = 'EMPLEADO';
-
+      bool perfilDescargado = false;
       try {
         final prefs = await SharedPreferences.getInstance();
         await Future.delayed(const Duration(milliseconds: 100));
@@ -61,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 int.parse(perfil['id'].toString()),
               );
             }
+            perfilDescargado = true;
           }
         }
 
@@ -70,34 +71,44 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       setState(() {
-        _isLoading = false; // Carga finalizada
+        _isLoading = false;
       });
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('¡Bienvenido a ObraDu!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      if (rolUsuario == 'JEFE') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const PanelJefeScreen()),
+      if (perfilDescargado) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Bienvenido a ObraDu!'),
+            backgroundColor: Colors.green,
+          ),
         );
+
+        if (rolUsuario == 'JEFE') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const PanelJefeScreen()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
       } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Error al sincronizar tu perfil. Inténtalo de nuevo.',
+            ),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } else {
       setState(() {
-        _isLoading = false; // Carga finalizada si falla
+        _isLoading = false;
       });
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error: Credenciales incorrectas'),

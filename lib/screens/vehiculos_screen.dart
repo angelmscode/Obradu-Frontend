@@ -21,6 +21,7 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
   int? _miId;
   List<Vehiculo> _vehiculos = [];
   bool _cargando = true;
+  int? _idVehiculoProcesando;
   // #endregion
 
   // #region Ciclo de Vida
@@ -57,6 +58,8 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
     String mensajeExito,
   ) async {
     setState(() => _cargando = true);
+    _idVehiculoProcesando = id;
+
     final exito = await accionApi(id);
 
     if (exito) {
@@ -79,6 +82,12 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
           ),
         );
       }
+      if (mounted) {
+        setState(() {
+          _cargando = false;
+          _idVehiculoProcesando = null;
+        });
+      }
     }
   }
   // #endregion
@@ -97,7 +106,7 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
         foregroundColor: AppColors.background,
       ),
       drawer: ObraDuDrawer(nombre: _nombre, rol: _rol),
-      body: _cargando
+      body: _cargando && _vehiculos.isEmpty
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             )
@@ -106,27 +115,60 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
               color: AppColors.primary,
               child: _vehiculos.isEmpty
                   ? ListView(
-                      children: const [
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
                         Padding(
-                          padding: EdgeInsets.all(40.0),
+                          padding: const EdgeInsets.only(
+                            top: 100.0,
+                            left: 40.0,
+                            right: 40.0,
+                          ),
                           child: Center(
-                            child: Text(
-                              'No hay vehículos registrados en la flota.',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 16,
-                              ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.directions_car_filled_outlined,
+                                  size: 64,
+                                  color: Colors.grey,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _cargando
+                                      ? 'Actualizando flota...'
+                                      : 'No hay vehículos registrados en la flota.',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ],
                     )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16.0),
-                      itemCount: _vehiculos.length,
-                      itemBuilder: (context, index) {
-                        return _crearTarjetaVehiculo(_vehiculos[index]);
-                      },
+                  : Stack(
+                      children: [
+                        ListView.builder(
+                          padding: const EdgeInsets.all(16.0),
+                          itemCount: _vehiculos.length,
+                          itemBuilder: (context, index) {
+                            return _crearTarjetaVehiculo(_vehiculos[index]);
+                          },
+                        ),
+                        if (_cargando)
+                          const Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            child: LinearProgressIndicator(
+                              color: AppColors.primary,
+                              backgroundColor: Colors.transparent,
+                            ),
+                          ),
+                      ],
                     ),
             ),
     );
@@ -141,6 +183,9 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
     final String estado = vehiculo.estado;
 
     final bool loTengoYo = (vehiculo.usuarioId == _miId && _miId != null);
+
+    final bool estaTarjetaProcesando =
+        (_cargando && _idVehiculoProcesando == id);
 
     Color colorBorde = AppColors.cardBorder;
     Color colorFondoIcono = Colors.grey.withValues(alpha: 0.2);
@@ -160,11 +205,13 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
             backgroundColor: AppColors.success,
             foregroundColor: Colors.white,
           ),
-          onPressed: () => _accionVehiculo(
-            ApiService().reservarVehiculo,
-            id,
-            'Vehículo reservado',
-          ),
+          onPressed: estaTarjetaProcesando
+              ? null
+              : () => _accionVehiculo(
+                  ApiService().reservarVehiculo,
+                  id,
+                  'Vehículo reservado',
+                ),
           child: const Text('Reservar'),
         ),
       );
@@ -174,11 +221,13 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
           IconButton(
             icon: const Icon(Icons.build, color: AppColors.error),
             tooltip: 'Enviar al Taller',
-            onPressed: () => _accionVehiculo(
-              ApiService().enviarVehiculoTaller,
-              id,
-              'Enviado al taller',
-            ),
+            onPressed: estaTarjetaProcesando
+                ? null
+                : () => _accionVehiculo(
+                    ApiService().enviarVehiculoTaller,
+                    id,
+                    'Enviado al taller',
+                  ),
           ),
         );
       }
@@ -194,11 +243,13 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
               foregroundColor: AppColors.warning,
               side: const BorderSide(color: AppColors.warning),
             ),
-            onPressed: () => _accionVehiculo(
-              ApiService().devolverVehiculo,
-              id,
-              'Vehículo devuelto',
-            ),
+            onPressed: estaTarjetaProcesando
+                ? null
+                : () => _accionVehiculo(
+                    ApiService().devolverVehiculo,
+                    id,
+                    'Vehículo devuelto',
+                  ),
             child: const Text('Devolver'),
           ),
         );
@@ -228,11 +279,13 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
             ),
             icon: const Icon(Icons.check_circle, size: 18),
             label: const Text('Marcar Reparado'),
-            onPressed: () => _accionVehiculo(
-              ApiService().recuperarVehiculoTaller,
-              id,
-              'Vehículo reparado',
-            ),
+            onPressed: estaTarjetaProcesando
+                ? null
+                : () => _accionVehiculo(
+                    ApiService().recuperarVehiculoTaller,
+                    id,
+                    'Vehículo reparado',
+                  ),
           ),
         );
       } else {
@@ -248,17 +301,24 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
       }
     }
 
+    if (estaTarjetaProcesando) {
+      colorBorde = Colors.blueAccent;
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: colorBorde, width: 1.5),
+        side: BorderSide(
+          color: colorBorde,
+          width: estaTarjetaProcesando ? 2.5 : 1.5,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, 
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
@@ -319,17 +379,19 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
                 child: Row(
                   children: [
                     Icon(
-                      vehiculo.asignadoA != null ? Icons.person : Icons.info_outline, 
-                      size: 16, 
-                      color: colorIcono
-                    ), 
+                      vehiculo.asignadoA != null
+                          ? Icons.person
+                          : Icons.info_outline,
+                      size: 16,
+                      color: colorIcono,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       loTengoYo
                           ? "LO TIENES TÚ"
                           : (vehiculo.asignadoA != null)
-                              ? "EN USO POR: ${vehiculo.asignadoA!.toUpperCase()}"
-                              : "VEHÍCULO EN USO",
+                          ? "EN USO POR: ${vehiculo.asignadoA!.toUpperCase()}"
+                          : "VEHÍCULO EN USO",
                       style: TextStyle(
                         color: colorIcono,
                         fontSize: 12,
@@ -348,5 +410,6 @@ class _VehiculosScreenState extends State<VehiculosScreen> {
       ),
     );
   }
+
   // #endregion
 }

@@ -12,9 +12,9 @@ class NuevaObraScreen extends StatefulWidget {
 // #endregion
 
 class _NuevaObraScreenState extends State<NuevaObraScreen> {
-  
   // #region Variables de Estado y Controladores
   final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
 
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _ubicacionController = TextEditingController();
@@ -31,29 +31,47 @@ class _NuevaObraScreenState extends State<NuevaObraScreen> {
 
   // #region Lógica y Acciones
   void _guardarObra() async {
+    if (_isLoading) return;
+
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
       final String nombreObra = _nombreController.text;
       final String ubicacionObra = _ubicacionController.text;
-      
-      bool exito = await ApiService().crearObra(nombreObra, ubicacionObra);
 
-      if (!mounted) return; 
+      try {
+        bool exito = await ApiService().crearObra(nombreObra, ubicacionObra);
 
-      if (exito) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Obra "$nombreObra" creada con éxito'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        Navigator.pop(context, true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al crear la obra. Verifica tu conexión o los datos.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (!mounted) return;
+
+        if (exito) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Obra "$nombreObra" creada con éxito'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          Navigator.pop(context, true);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Error al crear la obra. Verifica tu conexión o los datos.',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint("Error al crear obra: $e");
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
@@ -65,7 +83,10 @@ class _NuevaObraScreenState extends State<NuevaObraScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Nueva Obra', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Nueva Obra',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: AppColors.primaryDark,
         foregroundColor: AppColors.background,
       ),
@@ -78,7 +99,11 @@ class _NuevaObraScreenState extends State<NuevaObraScreen> {
             children: [
               const Text(
                 'Datos de la Obra',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
               ),
               const SizedBox(height: 24),
               TextFormField(
@@ -87,10 +112,15 @@ class _NuevaObraScreenState extends State<NuevaObraScreen> {
                   labelText: 'Nombre de la obra *',
                   hintText: 'Ej. Residencial Las Lomas',
                   prefixIcon: const Icon(Icons.business),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
                   ),
                 ),
                 validator: (value) {
@@ -107,10 +137,15 @@ class _NuevaObraScreenState extends State<NuevaObraScreen> {
                   labelText: 'Ubicación / Dirección',
                   hintText: 'Ej. Calle Mayor 12, Madrid',
                   prefixIcon: const Icon(Icons.location_on),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
@@ -122,13 +157,27 @@ class _NuevaObraScreenState extends State<NuevaObraScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.background,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  onPressed: _guardarObra,
-                  child: const Text(
-                    'CREAR OBRA',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  onPressed: _isLoading ? null : _guardarObra,
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'CREAR OBRA',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -137,5 +186,6 @@ class _NuevaObraScreenState extends State<NuevaObraScreen> {
       ),
     );
   }
+
   // #endregion
 }

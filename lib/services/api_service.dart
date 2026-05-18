@@ -118,7 +118,6 @@ class ApiService {
     }
   }
 
-   
   Future<Map<String, dynamic>?> getEstadisticasPanel() async {
     try {
       final token = await _getToken();
@@ -126,7 +125,7 @@ class ApiService {
         debugPrint('Error en getEstadisticasPanel: no hay sesión activa');
         return null;
       }
- 
+
       final response = await http.get(
         Uri.parse('$baseUrl/obras/estadisticas/panel-jefe'),
         headers: {
@@ -134,11 +133,13 @@ class ApiService {
           'Content-Type': 'application/json',
         },
       );
- 
+
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
-        debugPrint('Error al cargar estadísticas: ${response.statusCode} - ${response.body}');
+        debugPrint(
+          'Error al cargar estadísticas: ${response.statusCode} - ${response.body}',
+        );
         return null;
       }
     } catch (e) {
@@ -238,7 +239,14 @@ class ApiService {
       if (token == null) return false;
 
       final perfil = await obtenerPerfil(token);
-      final int usuarioId = empleadoId ?? (perfil?['id'] ?? 1);
+      if (empleadoId == null && (perfil == null || perfil['id'] == null)) {
+        debugPrint(
+          "Error crítico: No se pudo obtener el ID del usuario actual para realizar la operación.",
+        );
+        return false; 
+      }
+
+      final int usuarioId = empleadoId ?? int.parse(perfil!['id'].toString());
 
       final response = await http.post(
         Uri.parse('$baseUrl/asistencias/'),
@@ -282,8 +290,6 @@ class ApiService {
     }
   }
 
-  // Antes existían dos funciones idénticas (actualizarAsignacionTarea y reasignarTarea).
-  // Se han unificado en una sola con el nombre más descriptivo.
   Future<bool> reasignarTarea(int tareaId, int nuevoEmpleadoId) async {
     try {
       final token = await _getToken();
@@ -299,7 +305,9 @@ class ApiService {
       );
 
       if (response.statusCode != 200) {
-        debugPrint('Error al reasignar tarea: ${response.statusCode} - ${response.body}');
+        debugPrint(
+          'Error al reasignar tarea: ${response.statusCode} - ${response.body}',
+        );
       }
       return response.statusCode == 200;
     } catch (e) {
@@ -398,7 +406,9 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
-        debugPrint('Error al crear empleado: ${response.statusCode} - ${response.body}');
+        debugPrint(
+          'Error al crear empleado: ${response.statusCode} - ${response.body}',
+        );
         return false;
       }
     } catch (e) {
@@ -693,7 +703,11 @@ class ApiService {
     }
   }
 
-  Future<bool> consumirMaterialObra(int obraId, int materialId, int cantidad) async {
+  Future<bool> consumirMaterialObra(
+    int obraId,
+    int materialId,
+    int cantidad,
+  ) async {
     try {
       final token = await _getToken();
       if (token == null) return false;
@@ -741,5 +755,6 @@ class ApiService {
       return [];
     }
   }
+
   // #endregion
 }
