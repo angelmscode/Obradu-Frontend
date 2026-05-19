@@ -46,6 +46,14 @@ flutter pub get
 #### - En la terminal estando en la carpeta "Obradu-Frontend" ejecuta este comando:
 
 ```bash
-flutter run --dart-define=API_URL=http://cloning-sullen-eel.ngrok-free.dev:8000
+flutter run --dart-define=API_URL=https://cloning-sullen-eel.ngrok-free.dev
 ```
+
+
+
+#
+#
+#
+#
+*Desarrollado por Ángel Morales Sánchez como Proyecto Intermodular.*
 
