@@ -45,8 +45,10 @@ flutter pub get
 
 #### - En la terminal estando en la carpeta "Obradu-Frontend" ejecuta este comando:
 
+Para ejecutar en tu dispositivo fisico: 
+
 ```bash
-flutter run --dart-define=API_URL=https://cloning-sullen-eel.ngrok-free.dev
+flutter run --dart-define=API_URL=https://PONTUIPPRIVADA:8000
 ```
 
 
